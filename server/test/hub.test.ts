@@ -156,6 +156,7 @@ test('signal reaches only its target, not other peers in the room', async () => 
   a.send(JSON.stringify({ t: 'signal', to: 'p2', data: { kind: 'offer', sdp: 'x' } }));
   const sig = (await got) as Extract<ServerMsg, { t: 'signal' }>;
   expect(sig.from).toBe('p1');
+  expect(sig.data).toEqual({ kind: 'offer', sdp: 'x' });
   await new Promise((r) => setTimeout(r, 100));
   expect(cGotSignal).toBe(false);
 });
