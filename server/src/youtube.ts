@@ -9,6 +9,7 @@ export function extractVideoId(input: string): string | null {
   } catch {
     return null;
   }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
   const host = url.hostname.replace(/^(www|m)\./, '');
   if (host === 'youtu.be') {
     const id = url.pathname.slice(1).split('/')[0];
@@ -26,11 +27,11 @@ export function extractVideoId(input: string): string | null {
 export async function fetchTitle(videoId: string, fetchFn: typeof fetch = fetch): Promise<string> {
   try {
     const res = await fetchFn(
-      `https://www.youtube.com/oembed?url=https://youtu.be/${videoId}&format=json`,
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://youtu.be/${videoId}`)}&format=json`,
     );
     if (!res.ok) return videoId;
-    const data = (await res.json()) as { title?: string };
-    return data.title ?? videoId;
+    const data = (await res.json()) as { title?: unknown };
+    return typeof data.title === 'string' ? data.title : videoId;
   } catch {
     return videoId;
   }
