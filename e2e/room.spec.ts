@@ -140,6 +140,33 @@ test('a reaction floats on the other person’s screen then disappears', async (
   await expect(bob.locator('.reaction-float')).toHaveCount(0, { timeout: 6000 });
 });
 
+test('opening the room in a second tab does not kick the first', async ({ browser }) => {
+  const context = await browser.newContext();
+  const tab1 = await context.newPage();
+  await tab1.goto('/');
+  await tab1.getByRole('button', { name: 'Create a room' }).click();
+  await tab1.waitForURL(/\/r\/[A-Z0-9]{6}$/);
+  const code = tab1.url().split('/r/')[1];
+  await joinAs(tab1, 'Alice');
+
+  // same context => shared localStorage => the display name is already remembered, so this tab
+  // skips the join form entirely and lands straight in the room, exactly like a real second tab
+  const tab2 = await context.newPage();
+  await tab2.goto(`/r/${code}`);
+  await expect(tab2.locator('.room-code')).toBeVisible();
+  await expect(tab2.locator('.banner', { hasText: 'Connecting' })).toHaveCount(0);
+
+  // both tabs must stay live: before the fix they shared one participant id via localStorage and
+  // evicted each other every 500ms, tearing down every peer connection in the room each time
+  await expect(tab1.locator('.presence')).toHaveText('2 here');
+  await expect(tab2.locator('.presence')).toHaveText('2 here');
+
+  // and the first tab is still functional, not silently disconnected
+  await tab1.getByPlaceholder('Say something…').fill('still here');
+  await tab1.getByRole('button', { name: 'Send' }).click();
+  await expect(tab2.locator('.chat-msg')).toContainText(['still here']);
+});
+
 test('a dropped connection recovers and the room still works', async ({ browser }) => {
   const { page: alice, code } = await createRoom(browser, 'Alice');
   const bob = await joinRoom(browser, code, 'Bob');

@@ -72,8 +72,9 @@ function participantId(): string {
 function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const [state, dispatch] = useReducer(roomReducer, initialState);
   const reactionKey = useRef(0);
-  const [socket] = useState(() => new RoomSocket(roomId, name, participantId()));
-  const [mesh] = useState(() => new PeerMesh(socket));
+  const pid = participantId();
+  const [socket] = useState(() => new RoomSocket(roomId, name, pid));
+  const [mesh] = useState(() => new PeerMesh(socket, pid));
   const [streams, setStreams] = useState<Map<string, MediaStream>>(new Map());
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 

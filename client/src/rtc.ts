@@ -13,8 +13,12 @@ export class PeerMesh {
   private ice: RTCIceServer[] = [{ urls: 'stun:stun.l.google.com:19302' }];
 
   onStreams: (streams: Map<string, MediaStream>) => void = () => {};
+  private closed = false;
 
-  constructor(private socket: RoomSocket) {}
+  constructor(
+    private socket: RoomSocket,
+    private selfId: string,
+  ) {}
 
   async start(): Promise<MediaStream | null> {
     try {
@@ -70,7 +74,18 @@ export class PeerMesh {
       this.onStreams(new Map(this.streams));
     };
     pc.onconnectionstatechange = () => {
-      if (pc!.connectionState === 'failed') this.drop(peerId);
+      if (pc!.connectionState !== 'failed') return;
+      this.drop(peerId);
+      // exactly one side may retry, or the offers cross and both connections die; comparing the
+      // two ids lets both sides agree who it is without any extra signaling
+      if (this.selfId < peerId) {
+        // ponytail: one delayed retry, no backoff ladder — if it fails the tile stays dark until
+        // someone reloads, which is the behaviour this replaces
+        setTimeout(() => {
+          if (this.closed) return;
+          this.initiate(peerId).catch((err) => console.warn('[rtc] retry failed for', peerId, err));
+        }, 1000);
+      }
     };
     return pc;
   }
@@ -120,6 +135,7 @@ export class PeerMesh {
   }
 
   closeAll(): void {
+    this.closed = true;
     for (const id of [...this.peers.keys()]) this.drop(id);
     this.localStream?.getTracks().forEach((t) => t.stop());
   }
