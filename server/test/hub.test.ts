@@ -4,7 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { ServerMsg } from '@syncsofa/shared';
 import { createApp } from '../src/app';
-import { addItem, createRoom, listMessages, openDb, type Db } from '../src/db';
+import { addItem, createRoom, getPlayback, listMessages, openDb, type Db } from '../src/db';
 import { Hub } from '../src/hub';
 
 const fakeFetch = (async () =>
@@ -66,7 +66,6 @@ test('join returns snapshot; peers get peer-joined', async () => {
   const a = await connect();
   const snapA = (await join(a, 'p1', 'Alice')) as Extract<ServerMsg, { t: 'snapshot' }>;
   expect(snapA.snapshot.selfId).toBe('p1');
-  expect(snapA.snapshot.roomId).toBe('ABC234');
 
   const b = await connect();
   const joined = nextMsg(a, 'peer-joined');
@@ -248,4 +247,30 @@ test('rejoining with the same participantId replaces the socket without a spurio
   const chat = nextMsg(a2, 'chat');
   b.send(JSON.stringify({ t: 'chat', body: 'still there?' }));
   expect(((await chat) as Extract<ServerMsg, { t: 'chat' }>).message.body).toBe('still there?');
+});
+
+test('the clock freezes when the last participant leaves', async () => {
+  const item = addItem(db, 'ABC234', 'aaaaaaaaaaa', 'A', 'kes', Date.now());
+  const a = await connect();
+  await join(a, 'p1', 'Alice');
+  a.send(JSON.stringify({ t: 'play', time: 100 }));
+  await nextMsg(a, 'playback');
+
+  a.close();
+  await new Promise((r) => setTimeout(r, 150));
+
+  const pb = getPlayback(db, 'ABC234')!;
+  expect(pb.isPlaying).toBe(false);
+  expect(pb.currentItemId).toBe(item.id);
+  expect(pb.time).toBeGreaterThanOrEqual(100);
+  expect(pb.time).toBeLessThan(102); // frozen at the real position, not extrapolated
+});
+
+test('an evicted socket is told it was replaced', async () => {
+  const a = await connect();
+  await join(a, 'p1', 'Alice');
+  const err = nextMsg(a, 'error');
+  const a2 = await connect();
+  await join(a2, 'p1', 'Alice');
+  expect(((await err) as Extract<ServerMsg, { t: 'error' }>).code).toBe('replaced');
 });

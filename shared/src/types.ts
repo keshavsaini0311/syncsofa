@@ -18,7 +18,6 @@ export type Participant = { id: string; name: string };
 export type ChatMessage = { id: number; author: string; body: string; sentAt: number };
 
 export type RoomSnapshot = {
-  roomId: string;
   selfId: string;
   playback: PlaybackState;
   playlist: PlaylistItem[];

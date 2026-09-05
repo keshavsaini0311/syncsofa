@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import type { ClientMsg, Participant, RoomSnapshot, ServerMsg } from '@syncsofa/shared';
+import { expectedTime, type ClientMsg, type Participant, type RoomSnapshot, type ServerMsg } from '@syncsofa/shared';
 import * as store from './db';
 import { extractVideoId, fetchTitle } from './youtube';
 
@@ -71,12 +71,16 @@ export class Hub {
       peers = new Map();
       this.rooms.set(roomId, peers);
     }
-    peers.get(participant.id)?.ws.close(); // reconnect replaces the old socket
+    const existing = peers.get(participant.id);
+    if (existing) {
+      // tell the old socket it was deliberately replaced, so its client stops reconnecting
+      send(existing.ws, { t: 'error', code: 'replaced' });
+      existing.ws.close();
+    }
     const conn: Conn = { ws, participant, roomId };
     peers.set(participant.id, conn);
 
     const snapshot: RoomSnapshot = {
-      roomId,
       selfId: participant.id,
       playback: store.getPlayback(this.db, roomId)!,
       playlist: store.listItems(this.db, roomId),
@@ -92,7 +96,16 @@ export class Hub {
     const peers = this.rooms.get(conn.roomId);
     if (peers?.get(conn.participant.id) === conn) {
       peers.delete(conn.participant.id);
-      if (peers.size === 0) this.rooms.delete(conn.roomId);
+      if (peers.size === 0) {
+        this.rooms.delete(conn.roomId);
+        // nobody is left to advance the clock, and expectedTime extrapolates without bound —
+        // freeze at the real position so rejoining tomorrow resumes instead of fast-forwarding
+        const pb = store.getPlayback(this.db, conn.roomId);
+        if (pb?.isPlaying) {
+          const now = Date.now();
+          store.setPlayback(this.db, conn.roomId, false, expectedTime(pb, now), now);
+        }
+      }
       this.broadcast(conn.roomId, { t: 'peer-left', participantId: conn.participant.id });
     }
   }
