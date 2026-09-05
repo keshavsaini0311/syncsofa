@@ -122,10 +122,12 @@ describe('cross-room isolation', () => {
     expect(listMessages(db, 'ABC234')).toEqual([]);
   });
 
-  test('a foreign itemId never disturbs either room’s current item', () => {
+  test('a foreign itemId never disturbs either room', () => {
     const mine = addItem(db, 'ABC234', 'mmmmmmmmmmm', 'Mine', 'kes', NOW);
     const theirs = addItem(db, 'XYZ789', 'ttttttttttt', 'Theirs', 'bob', NOW);
     removeItem(db, 'ABC234', theirs.id, NOW);
+    // the victim room's playlist surviving is what actually fails if the DELETE loses its room scope
+    expect(listItems(db, 'XYZ789').map((i) => i.id)).toEqual([theirs.id]);
     expect(currentItemId('ABC234')).toBe(mine.id);
     expect(currentItemId('XYZ789')).toBe(theirs.id);
   });
