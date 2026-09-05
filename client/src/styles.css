@@ -1,1 +1,75 @@
-body { margin: 0; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+:root {
+  --bg: #12141a;
+  --panel: #1b1f2a;
+  --panel-2: #232838;
+  --text: #e8eaf0;
+  --muted: #8b91a5;
+  --accent: #ff7a59;
+}
+body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+button { font: inherit; cursor: pointer; border: 0; border-radius: 8px; padding: 8px 14px; background: var(--panel-2); color: var(--text); }
+button.primary { background: var(--accent); color: #fff; }
+button:disabled { opacity: 0.5; cursor: default; }
+input { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid #333a4d; background: var(--panel); color: var(--text); min-width: 0; }
+a { color: var(--accent); }
+
+.home { max-width: 420px; margin: 15vh auto 0; padding: 0 16px; text-align: center; display: flex; flex-direction: column; gap: 16px; }
+.home h1 { font-size: 2.4rem; margin: 0; }
+.home p { color: var(--muted); margin: 0; }
+.home form { display: flex; gap: 8px; justify-content: center; }
+
+.room { display: flex; flex-direction: column; height: 100vh; }
+.room header { display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--panel); }
+.brand { text-decoration: none; color: var(--text); font-weight: 700; }
+.room-code { font-family: ui-monospace, monospace; letter-spacing: 2px; }
+.presence { color: var(--muted); margin-left: auto; }
+
+.room main { flex: 1; display: grid; grid-template-columns: 1fr 320px; gap: 12px; padding: 12px 16px; min-height: 0; }
+.stage { display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 0; }
+.video-wrap { position: relative; flex: 1; background: #000; border-radius: 12px; overflow: hidden; min-height: 240px; }
+.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+.empty { display: grid; place-items: center; height: 100%; color: var(--muted); }
+
+aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+.panel { background: var(--panel); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; min-height: 0; }
+.panel h2 { margin: 0 0 8px; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+.panel form { display: flex; gap: 6px; }
+.panel form input { flex: 1; }
+
+.playlist { flex: 1; }
+.playlist ul { list-style: none; margin: 8px 0 0; padding: 0; overflow-y: auto; }
+.playlist li { display: flex; align-items: center; gap: 4px; padding: 6px 4px; border-radius: 8px; }
+.playlist li.current { background: var(--panel-2); }
+.playlist li .title { flex: 1; text-align: left; background: none; padding: 2px 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.playlist li.current .title { color: var(--accent); }
+.playlist li .by { color: var(--muted); font-size: 0.75rem; }
+.playlist li button:not(.title) { padding: 2px 6px; background: none; color: var(--muted); }
+
+.chat { flex: 1; }
+.chat-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.chat-msg b { color: var(--accent); margin-right: 6px; }
+
+.reaction-bar { display: flex; gap: 6px; }
+.reaction-bar button { font-size: 1.2rem; padding: 6px 10px; }
+.reaction-overlay { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.reaction-float { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; animation: float-up 3s ease-out forwards; }
+.reaction-float span { font-size: 2rem; }
+.reaction-float small { color: #fff; text-shadow: 0 1px 3px #000; }
+@keyframes float-up {
+  from { transform: translateY(0); opacity: 1; }
+  to { transform: translateY(-70vh); opacity: 0; }
+}
+
+.call-strip { display: flex; gap: 8px; align-items: center; }
+.tile { position: relative; width: 140px; aspect-ratio: 4/3; background: var(--panel); border-radius: 10px; overflow: hidden; flex-shrink: 0; }
+.tile video { width: 100%; height: 100%; object-fit: cover; }
+.tile .no-cam { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 1.5rem; }
+.tile-name { position: absolute; left: 6px; bottom: 4px; font-size: 0.7rem; color: #fff; text-shadow: 0 1px 2px #000; }
+.call-controls { display: flex; flex-direction: column; gap: 6px; }
+
+.banner { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 6px 16px; border-radius: 999px; }
+
+@media (max-width: 800px) {
+  .room main { grid-template-columns: 1fr; overflow-y: auto; }
+}
