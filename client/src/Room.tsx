@@ -1,5 +1,6 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import type { ClientMsg } from '@syncsofa/shared';
+import { Player } from './Player';
 import { initialState, roomReducer } from './roomReducer';
 import { RoomSocket } from './ws';
 
@@ -74,7 +75,6 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   }, []);
 
   const send = (m: ClientMsg) => socket.send(m);
-  void send; // used by Tasks 9-11 panels
 
   if (state.error === 'room-not-found') {
     return (
@@ -87,7 +87,6 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   }
 
   const currentItem = state.playlist.find((i) => i.id === state.playback?.currentItemId) ?? null;
-  void currentItem; // used by Task 9
 
   return (
     <div className="room">
@@ -109,7 +108,17 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
       <main>
         <div className="stage">
           <div className="video-wrap">
-            <div className="empty">Add a YouTube link to get started →</div>
+            {currentItem ? (
+              <Player
+                key={currentItem.id}
+                videoId={currentItem.videoId}
+                itemId={currentItem.id}
+                playback={state.playback}
+                send={send}
+              />
+            ) : (
+              <div className="empty">Add a YouTube link to get started →</div>
+            )}
           </div>
         </div>
         <aside>{/* Playlist + Chat land here in Task 10 */}</aside>
