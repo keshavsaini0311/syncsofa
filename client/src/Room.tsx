@@ -6,6 +6,8 @@ import { Chat } from './Chat';
 import { ReactionBar, ReactionOverlay } from './Reactions';
 import { initialState, roomReducer } from './roomReducer';
 import { RoomSocket } from './ws';
+import { PeerMesh } from './rtc';
+import { CallStrip } from './CallStrip';
 
 export function Room({ roomId }: { roomId: string }) {
   const [name, setName] = useState<string | null>(() => localStorage.getItem('syncsofa-name'));
@@ -60,9 +62,20 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const [state, dispatch] = useReducer(roomReducer, initialState);
   const reactionKey = useRef(0);
   const [socket] = useState(() => new RoomSocket(roomId, name, participantId()));
+  const [mesh] = useState(() => new PeerMesh(socket));
+  const [streams, setStreams] = useState<Map<string, MediaStream>>(new Map());
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
     socket.onMessage = (msg) => {
+      if (msg.t === 'signal') {
+        mesh.handleSignal(msg);
+        return;
+      }
+      if (msg.t === 'peer-left') mesh.drop(msg.participantId);
+      if (msg.t === 'snapshot') {
+        mesh.offerTo(msg.snapshot.participants.map((p) => p.id).filter((id) => id !== msg.snapshot.selfId));
+      }
       if (msg.t === 'reaction') {
         const key = ++reactionKey.current;
         dispatch({ t: 'server', msg, key });
@@ -72,8 +85,17 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
       dispatch({ t: 'server', msg });
     };
     socket.onDisconnect = () => dispatch({ t: 'disconnected' });
-    socket.connect();
-    return () => socket.close();
+    mesh.onStreams = setStreams;
+    // media must be acquired before we connect: a snapshot could otherwise arrive
+    // and trigger offers before any local track exists.
+    mesh.start().then((ls) => {
+      setLocalStream(ls);
+      socket.connect();
+    });
+    return () => {
+      mesh.closeAll();
+      socket.close();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -125,6 +147,14 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             <ReactionOverlay reactions={state.reactions} />
           </div>
           <ReactionBar send={send} />
+          <CallStrip
+            mesh={mesh}
+            localStream={localStream}
+            streams={streams}
+            participants={state.participants}
+            selfId={state.selfId}
+            selfName={name}
+          />
         </div>
         <aside>
           <Playlist items={state.playlist} currentItemId={state.playback?.currentItemId ?? null} send={send} />
