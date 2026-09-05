@@ -1,8 +1,10 @@
 import { createServer } from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
+import { WebSocketServer } from 'ws';
 import { createApp } from './app';
 import { openDb, sweepRooms } from './db';
+import { Hub } from './hub';
 
 const dbPath = process.env.DB_PATH ?? 'data/syncsofa.db';
 if (dbPath !== ':memory:') fs.mkdirSync(path.dirname(dbPath), { recursive: true });
@@ -10,6 +12,10 @@ const db = openDb(dbPath);
 
 const app = createApp(db);
 const server = createServer(app);
+
+const wss = new WebSocketServer({ server, path: '/ws' });
+const hub = new Hub(db);
+wss.on('connection', (ws) => hub.handleConnection(ws));
 
 // rooms untouched for 30 days get swept once a day
 setInterval(() => sweepRooms(db, 30 * 24 * 3600 * 1000, Date.now()), 24 * 3600 * 1000);
