@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from 'vitest';
 import {
-  addItem, advanceAfter, createRoom, getPlayback, openDb, playItem,
+  addItem, addMessage, advanceAfter, createRoom, getPlayback, openDb, playItem,
   removeItem, roomExists, setPlayback, sweepRooms, type Db,
 } from '../src/db';
 import type { PlaylistItem } from '@syncsofa/shared';
@@ -63,4 +63,19 @@ test('removing a non-current item leaves the current item alone', () => {
   playItem(db, 'ABC234', b.id, NOW + 100); // current is now the SECOND item
   removeItem(db, 'ABC234', c.id, NOW + 200); // remove a different, non-current item
   expect(getPlayback(db, 'ABC234')!.currentItemId).toBe(b.id);
+});
+
+test('setPlayback clamps non-finite and negative times', () => {
+  expect(setPlayback(db, 'ABC234', true, Infinity, NOW)!.time).toBe(0);
+  expect(setPlayback(db, 'ABC234', true, -Infinity, NOW)!.time).toBe(0);
+  expect(setPlayback(db, 'ABC234', true, NaN, NOW)!.time).toBe(0);
+  expect(setPlayback(db, 'ABC234', true, -5, NOW)!.time).toBe(0);
+  expect(setPlayback(db, 'ABC234', true, 42.5, NOW)!.time).toBe(42.5);
+});
+
+test('chatting keeps a room fresh so the sweeper leaves it alone', () => {
+  createRoom(db, 'CHATTY', NOW - 100_000);
+  addMessage(db, 'CHATTY', 'kes', 'still here', NOW);
+  expect(sweepRooms(db, 50_000, NOW)).toBe(0);
+  expect(roomExists(db, 'CHATTY')).toBe(true);
 });

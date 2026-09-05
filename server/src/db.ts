@@ -94,6 +94,7 @@ export function moveItem(db: Db, roomId: string, itemId: number, toPosition: num
 
 export function addMessage(db: Db, roomId: string, author: string, body: string, now: number): ChatMessage {
   const info = db.prepare('INSERT INTO messages (room_id, author, body, sent_at) VALUES (?, ?, ?, ?)').run(roomId, author, body, now);
+  db.prepare('UPDATE rooms SET updated_at = ? WHERE id = ?').run(now, roomId); // chat is activity too; keeps sweepRooms from reaping an active room
   return { id: Number(info.lastInsertRowid), author, body, sentAt: now };
 }
 
@@ -110,7 +111,9 @@ export function getPlayback(db: Db, roomId: string): PlaybackState | null {
 }
 
 export function setPlayback(db: Db, roomId: string, isPlaying: boolean, time: number, now: number): PlaybackState | null {
-  db.prepare('UPDATE rooms SET is_playing = ?, time = ?, updated_at = ? WHERE id = ?').run(isPlaying ? 1 : 0, time, now, roomId);
+  // a client can send Infinity or a negative seek; JSON.stringify turns Infinity into null on the wire
+  const safeTime = Number.isFinite(time) && time >= 0 ? time : 0;
+  db.prepare('UPDATE rooms SET is_playing = ?, time = ?, updated_at = ? WHERE id = ?').run(isPlaying ? 1 : 0, safeTime, now, roomId);
   return getPlayback(db, roomId);
 }
 
