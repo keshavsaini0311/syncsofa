@@ -45,7 +45,8 @@ function JoinForm({ roomId, onJoin }: { roomId: string; onJoin: (name: string) =
 function participantId(): string {
   let pid = localStorage.getItem('syncsofa-pid');
   if (!pid) {
-    pid = crypto.randomUUID();
+    // crypto.randomUUID is secure-context only; this app may run on a plain-http LAN address
+    pid = crypto.randomUUID?.() ?? `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
     localStorage.setItem('syncsofa-pid', pid);
   }
   return pid;
@@ -92,7 +93,15 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
     <div className="room">
       <header>
         <a href="/" className="brand">🛋️ syncsofa</a>
-        <button className="room-code" onClick={() => navigator.clipboard.writeText(location.href)} title="Copy invite link">
+        <button
+          className="room-code"
+          onClick={() => {
+            // navigator.clipboard is secure-context only; fall back to a manual-copy prompt
+            navigator.clipboard?.writeText(location.href).catch(() => prompt('Copy this link:', location.href));
+            if (!navigator.clipboard) prompt('Copy this link:', location.href);
+          }}
+          title="Copy invite link"
+        >
           {roomId} ⧉
         </button>
         <span className="presence">{state.participants.length} here</span>

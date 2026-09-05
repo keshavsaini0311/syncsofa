@@ -80,4 +80,44 @@ describe('roomReducer', () => {
     const s = apply([{ t: 'error', code: 'room-not-found' }]);
     expect(s.error).toBe('room-not-found');
   });
+
+  test('a state-changing action returns new objects and leaves the old ones untouched', () => {
+    const before = apply([{ t: 'snapshot', snapshot }]);
+    const participantsRef = before.participants;
+    const after = roomReducer(before, {
+      t: 'server',
+      msg: { t: 'peer-joined', participant: { id: 'p2', name: 'Bob' } },
+    });
+    expect(after).not.toBe(before);
+    expect(after.participants).not.toBe(participantsRef);
+    expect(participantsRef).toHaveLength(1); // the previous array must not have been mutated
+    expect(after.participants).toHaveLength(2);
+  });
+
+  test('chat append leaves the previous messages array untouched', () => {
+    const before = apply([
+      { t: 'snapshot', snapshot },
+      { t: 'chat', message: { id: 1, author: 'a', body: 'x', sentAt: 1 } },
+    ]);
+    const messagesRef = before.messages;
+    const after = roomReducer(before, {
+      t: 'server',
+      msg: { t: 'chat', message: { id: 2, author: 'b', body: 'y', sentAt: 2 } },
+    });
+    expect(messagesRef).toHaveLength(1);
+    expect(after.messages).toHaveLength(2);
+    expect(after.messages).not.toBe(messagesRef);
+  });
+
+  test('no-op actions return the identical state reference', () => {
+    const s = apply([
+      { t: 'snapshot', snapshot },
+      { t: 'peer-joined', participant: { id: 'p2', name: 'Bob' } },
+    ]);
+    // duplicate peer-joined is deliberate dedupe; signal is handled by the rtc layer, not the reducer
+    expect(
+      roomReducer(s, { t: 'server', msg: { t: 'peer-joined', participant: { id: 'p2', name: 'Bob' } } }),
+    ).toBe(s);
+    expect(roomReducer(s, { t: 'server', msg: { t: 'signal', from: 'p2', data: {} } })).toBe(s);
+  });
 });
