@@ -3,7 +3,6 @@ import type { RoomSnapshot, ServerMsg } from '@syncsofa/shared';
 import { initialState, roomReducer } from '../src/roomReducer';
 
 const snapshot: RoomSnapshot = {
-  roomId: 'ABC234',
   selfId: 'p1',
   playback: { currentItemId: null, isPlaying: false, time: 0, updatedAt: 0 },
   playlist: [],
