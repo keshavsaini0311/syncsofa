@@ -1,6 +1,9 @@
 import { useEffect, useReducer, useRef, useState } from 'react';
 import type { ClientMsg } from '@syncsofa/shared';
 import { Player } from './Player';
+import { Playlist } from './Playlist';
+import { Chat } from './Chat';
+import { ReactionBar, ReactionOverlay } from './Reactions';
 import { initialState, roomReducer } from './roomReducer';
 import { RoomSocket } from './ws';
 
@@ -119,9 +122,14 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             ) : (
               <div className="empty">Add a YouTube link to get started →</div>
             )}
+            <ReactionOverlay reactions={state.reactions} />
           </div>
+          <ReactionBar send={send} />
         </div>
-        <aside>{/* Playlist + Chat land here in Task 10 */}</aside>
+        <aside>
+          <Playlist items={state.playlist} currentItemId={state.playback?.currentItemId ?? null} send={send} />
+          <Chat messages={state.messages} send={send} />
+        </aside>
       </main>
       {!state.joined && <div className="banner">Connecting…</div>}
     </div>
