@@ -19,9 +19,9 @@ export class RoomSocket {
     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
     const ws = new WebSocket(`${proto}://${location.host}/ws`);
     this.ws = ws;
-    // exposed so e2e can sever the connection and prove reconnect works
-    const w = window as unknown as { __sockets?: WebSocket[] };
-    (w.__sockets ??= []).push(ws);
+    // exposed so e2e can sever the connection and prove reconnect works; only the live socket
+    // is retained, or a reconnect loop would pin every dead socket forever
+    (window as unknown as { __sockets?: WebSocket[] }).__sockets = [ws];
     ws.onopen = () => {
       this.attempts = 0;
       const join: ClientMsg = { t: 'join', roomId: this.roomId, name: this.name, participantId: this.participantId };

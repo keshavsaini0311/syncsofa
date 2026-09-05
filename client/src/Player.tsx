@@ -86,11 +86,16 @@ export function Player({ videoId, itemId, playback, send }: Props) {
             applyRemote();
           },
           onStateChange: (e: any) => {
+            // ENDED is never an echo worth discarding: a programmatic seek past the end is still
+            // a genuine advance, and if every client suppresses it the room stalls forever
+            if (e.data === 0) {
+              sendRef.current({ t: 'video-ended', itemId: itemIdRef.current });
+              return;
+            }
             if (Date.now() < suppressUntil.current) return;
             const time = player.current?.getCurrentTime?.() ?? 0;
             if (e.data === 1) sendRef.current({ t: 'play', time });
             else if (e.data === 2) sendRef.current({ t: 'pause', time });
-            else if (e.data === 0) sendRef.current({ t: 'video-ended', itemId: itemIdRef.current });
           },
         },
       });

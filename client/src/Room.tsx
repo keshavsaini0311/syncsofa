@@ -58,11 +58,13 @@ function JoinForm({ roomId, onJoin }: { roomId: string; onJoin: (name: string) =
 }
 
 function participantId(): string {
-  let pid = localStorage.getItem('syncsofa-pid');
+  // sessionStorage, not localStorage: it survives reloads (all reconnect identity needs) but is
+  // per-tab, so opening the room twice in one browser can't make two tabs fight over one id
+  let pid = sessionStorage.getItem('syncsofa-pid');
   if (!pid) {
     // crypto.randomUUID is secure-context only; this app may run on a plain-http LAN address
     pid = crypto.randomUUID?.() ?? `p-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem('syncsofa-pid', pid);
+    sessionStorage.setItem('syncsofa-pid', pid);
   }
   return pid;
 }
@@ -91,7 +93,15 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         setTimeout(() => dispatch({ t: 'reaction-expired', key }), 3000);
         return;
       }
-      if (msg.t === 'error' && msg.code !== 'room-not-found') {
+      if (msg.t === 'error' && (msg.code === 'replaced' || msg.code === 'room-not-found')) {
+        // deliberate server-side teardown (evicted by another tab, or the room never existed) —
+        // stop reconnecting and release the camera instead of retrying forever behind a dead end
+        socket.close();
+        mesh.closeAll();
+        dispatch({ t: 'server', msg });
+        return;
+      }
+      if (msg.t === 'error') {
         dispatch({ t: 'server', msg });
         setTimeout(() => dispatch({ t: 'error-cleared' }), 4000);
         return;
@@ -121,6 +131,18 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         <h1>🛋️ syncsofa</h1>
         <p>Room {roomId} doesn’t exist.</p>
         <a href="/">Go home</a>
+      </div>
+    );
+  }
+
+  if (state.error === 'replaced') {
+    return (
+      <div className="home">
+        <h1>🛋️ syncsofa</h1>
+        <p>This room was opened in another tab or window, so this one disconnected.</p>
+        <button className="primary" onClick={() => location.reload()}>
+          Use this tab instead
+        </button>
       </div>
     );
   }
