@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import type { ChatMessage, PlaylistItem } from '@syncsofa/shared';
+import type { ChatMessage, PlaybackState, PlaylistItem } from '@syncsofa/shared';
 
 export type Db = Database.Database;
 
@@ -101,4 +101,40 @@ export function listMessages(db: Db, roomId: string, limit = 100): ChatMessage[]
   return (db.prepare('SELECT id, author, body, sent_at FROM messages WHERE room_id = ? ORDER BY id DESC LIMIT ?').all(roomId, limit) as any[])
     .reverse()
     .map((r) => ({ id: r.id, author: r.author, body: r.body, sentAt: r.sent_at }));
+}
+
+export function getPlayback(db: Db, roomId: string): PlaybackState | null {
+  const r = db.prepare('SELECT current_item_id, is_playing, time, updated_at FROM rooms WHERE id = ?').get(roomId) as any;
+  if (!r) return null;
+  return { currentItemId: r.current_item_id, isPlaying: !!r.is_playing, time: r.time, updatedAt: r.updated_at };
+}
+
+export function setPlayback(db: Db, roomId: string, isPlaying: boolean, time: number, now: number): PlaybackState | null {
+  db.prepare('UPDATE rooms SET is_playing = ?, time = ?, updated_at = ? WHERE id = ?').run(isPlaying ? 1 : 0, time, now, roomId);
+  return getPlayback(db, roomId);
+}
+
+export function playItem(db: Db, roomId: string, itemId: number, now: number): PlaybackState | null {
+  const item = db.prepare('SELECT id FROM playlist_items WHERE id = ? AND room_id = ?').get(itemId, roomId);
+  if (!item) return null;
+  db.prepare('UPDATE rooms SET current_item_id = ?, is_playing = 1, time = 0, updated_at = ? WHERE id = ?').run(itemId, now, roomId);
+  return getPlayback(db, roomId);
+}
+
+export function advanceAfter(db: Db, roomId: string, endedItemId: number, now: number): PlaybackState | null {
+  const pb = getPlayback(db, roomId);
+  if (!pb || pb.currentItemId !== endedItemId) return null; // idempotent: only the first "ended" report wins
+  const items = listItems(db, roomId);
+  const idx = items.findIndex((i) => i.id === endedItemId);
+  const next = idx >= 0 ? items[idx + 1] : undefined;
+  if (next) {
+    db.prepare('UPDATE rooms SET current_item_id = ?, is_playing = 1, time = 0, updated_at = ? WHERE id = ?').run(next.id, now, roomId);
+  } else {
+    db.prepare('UPDATE rooms SET is_playing = 0, updated_at = ? WHERE id = ?').run(now, roomId);
+  }
+  return getPlayback(db, roomId);
+}
+
+export function sweepRooms(db: Db, maxAgeMs: number, now: number): number {
+  return db.prepare('DELETE FROM rooms WHERE updated_at < ?').run(now - maxAgeMs).changes;
 }
