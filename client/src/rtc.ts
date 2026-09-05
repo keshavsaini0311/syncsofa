@@ -19,7 +19,12 @@ export class PeerMesh {
   async start(): Promise<MediaStream | null> {
     try {
       const res = await fetch('/api/ice');
-      this.ice = ((await res.json()) as { iceServers: RTCIceServer[] }).iceServers;
+      if (res.ok) {
+        const body = (await res.json()) as { iceServers?: RTCIceServer[] };
+        if (Array.isArray(body.iceServers) && body.iceServers.length > 0) {
+          this.ice = body.iceServers;
+        }
+      }
     } catch {
       /* keep STUN default */
     }
@@ -36,7 +41,9 @@ export class PeerMesh {
 
   /** Called with the other participants' ids when OUR snapshot arrives: we are the newcomer, we offer. */
   offerTo(peerIds: string[]): void {
-    for (const id of peerIds) void this.initiate(id);
+    for (const id of peerIds) {
+      this.initiate(id).catch((err) => console.warn('[rtc] failed to offer to', id, err));
+    }
   }
 
   handleSignal(msg: Extract<ServerMsg, { t: 'signal' }>): void {
@@ -70,8 +77,9 @@ export class PeerMesh {
     this.signal(peerId, { kind: 'offer', sdp: offer });
   }
 
-  // ponytail: simultaneous mutual reconnect can thrash offers briefly; converges at family scale —
-  // perfect-negotiation pattern is the upgrade path
+  // ponytail: if two peers reconnect at the same instant their offers cross and neither side
+  // recovers on its own — it takes a further reconnect or a reload. Rare at family scale; the
+  // real fix is the perfect-negotiation pattern (polite/impolite peers).
   private async handle(from: string, data: SignalData): Promise<void> {
     try {
       if (data.kind === 'offer') {
@@ -87,11 +95,10 @@ export class PeerMesh {
         await this.peers.get(from)?.addIceCandidate(data.candidate);
       }
     } catch (err) {
-      // stale candidate or race during rebuild — the offerer will retry via reconnect.
-      // ponytail: log at debug (not error) since this is an expected, self-healing race,
-      // not the hub's "anything could be wrong" case — but a silent catch here would hide
-      // a real regression forever, so leave a trace like hub.ts does for its contained errors.
-      console.debug('[rtc] signal handling failed, dropping', from, data.kind, err);
+      // a stale candidate or a race during a rebuild — drop the peer so a later offer can
+      // rebuild it cleanly, rather than stranding a half-built connection in the map
+      console.warn('[rtc] signal handling failed for', from, err);
+      this.drop(from);
     }
   }
 
