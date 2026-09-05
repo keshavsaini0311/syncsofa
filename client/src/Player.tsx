@@ -70,7 +70,12 @@ export function Player({ videoId, itemId, playback, send }: Props) {
     let disposed = false;
     loadYT().then((YT) => {
       if (disposed || !holder.current) return;
-      player.current = new YT.Player(holder.current, {
+      // YT.Player REPLACES the element it is given with an iframe. Hand it a throwaway child
+      // so React never has to remove a node YouTube already swapped out — that race throws
+      // removeChild NotFoundError and takes down the whole React tree.
+      const mount = document.createElement('div');
+      holder.current.appendChild(mount);
+      player.current = new YT.Player(mount, {
         width: '100%',
         height: '100%',
         videoId,
