@@ -5,6 +5,8 @@ import { extractVideoId, fetchTitle } from './youtube';
 
 type Conn = { ws: WebSocket; participant: Participant; roomId: string };
 
+const isItemId = (v: unknown): v is number => Number.isInteger(v);
+
 export class Hub {
   private rooms = new Map<string, Map<string, Conn>>(); // roomId -> participantId -> conn
 
@@ -29,13 +31,16 @@ export class Hub {
           return;
         }
         await this.handle(conn, msg);
-      } catch {
+      } catch (err) {
         // a malformed field (e.g. a non-string roomId, or an object/array where a
         // numeric itemId is expected) can throw synchronously deep in the store
         // (better-sqlite3 rejects non-primitive bind params). This handler is async,
         // so an uncaught throw becomes an unhandled rejection, which crashes the
         // whole Node process by default (Node >=15) -- taking every room down with
-        // it, not just this connection. Contain the damage to this one socket.
+        // it, not just this connection. Contain the damage to this one socket, but
+        // log loudly -- a silent catch here turns any future bug into a silent
+        // disconnect with zero server-side trace.
+        console.error('[hub] message handling failed, closing socket', err);
         ws.close();
       }
     });
@@ -51,9 +56,15 @@ export class Hub {
       ws.close();
       return null;
     }
+    if (typeof msg.participantId !== 'string' || !msg.participantId) {
+      send(ws, { t: 'error', code: 'bad-join' });
+      ws.close();
+      return null;
+    }
+    const name = typeof msg.name === 'string' ? msg.name.trim().slice(0, 40) : '';
     const participant: Participant = {
-      id: String(msg.participantId).slice(0, 64),
-      name: String(msg.name).slice(0, 40) || 'Guest',
+      id: msg.participantId.slice(0, 64),
+      name: name || 'Guest',
     };
     let peers = this.rooms.get(roomId);
     if (!peers) {
@@ -103,6 +114,7 @@ export class Hub {
         break;
       }
       case 'video-ended': {
+        if (!isItemId(msg.itemId)) return;
         const pb = store.advanceAfter(this.db, roomId, msg.itemId, now);
         if (pb) this.broadcast(roomId, { t: 'playback', playback: pb });
         break;
@@ -116,14 +128,17 @@ export class Hub {
         break;
       }
       case 'playlist-remove':
+        if (!isItemId(msg.itemId)) return;
         store.removeItem(this.db, roomId, msg.itemId, now);
         this.broadcastPlaylist(roomId);
         break;
       case 'playlist-move':
+        if (!isItemId(msg.itemId) || !Number.isInteger(msg.toPosition)) return;
         store.moveItem(this.db, roomId, msg.itemId, msg.toPosition);
         this.broadcastPlaylist(roomId);
         break;
       case 'playlist-play': {
+        if (!isItemId(msg.itemId)) return;
         const pb = store.playItem(this.db, roomId, msg.itemId, now);
         if (pb) this.broadcast(roomId, { t: 'playback', playback: pb });
         break;

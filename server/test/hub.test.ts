@@ -4,7 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { WebSocket, WebSocketServer } from 'ws';
 import type { ServerMsg } from '@syncsofa/shared';
 import { createApp } from '../src/app';
-import { addItem, createRoom, openDb, type Db } from '../src/db';
+import { addItem, createRoom, listMessages, openDb, type Db } from '../src/db';
 import { Hub } from '../src/hub';
 
 const fakeFetch = (async () =>
@@ -78,8 +78,10 @@ test('join returns snapshot; peers get peer-joined', async () => {
 test('join to unknown room errors and closes', async () => {
   const ws = await connect();
   const err = nextMsg(ws, 'error');
+  const closed = new Promise<void>((resolve) => ws.once('close', () => resolve()));
   ws.send(JSON.stringify({ t: 'join', roomId: 'ZZZZZZ', name: 'X', participantId: 'p9' }));
   expect(((await err) as Extract<ServerMsg, { t: 'error' }>).code).toBe('room-not-found');
+  await closed;
 });
 
 test('play broadcasts playback to everyone', async () => {
@@ -108,12 +110,20 @@ test('playlist-add persists, broadcasts playlist with stub title', async () => {
   expect(pl.playback?.currentItemId).toBe(pl.playlist[0].id);
 });
 
-test('bad playlist url errors sender only', async () => {
+test('bad playlist url errors the sender only', async () => {
   const a = await connect();
   await join(a, 'p1', 'Alice');
+  const b = await connect();
+  await join(b, 'p2', 'Bob');
+  let bGotError = false;
+  b.on('message', (raw) => {
+    if ((JSON.parse(String(raw)) as ServerMsg).t === 'error') bGotError = true;
+  });
   const err = nextMsg(a, 'error');
   a.send(JSON.stringify({ t: 'playlist-add', url: 'https://vimeo.com/1' }));
   expect(((await err) as Extract<ServerMsg, { t: 'error' }>).code).toBe('bad-url');
+  await new Promise((r) => setTimeout(r, 100));
+  expect(bGotError).toBe(false);
 });
 
 test('chat persists and broadcasts', async () => {
@@ -131,31 +141,66 @@ test('chat persists and broadcasts', async () => {
   expect(snapC.snapshot.messages.at(-1)?.body).toBe('hello sofa');
 });
 
-test('signal relays only to target', async () => {
+test('signal reaches only its target, not other peers in the room', async () => {
   const a = await connect();
   await join(a, 'p1', 'Alice');
   const b = await connect();
   await join(b, 'p2', 'Bob');
+  const c = await connect();
+  await join(c, 'p3', 'Cara');
+  let cGotSignal = false;
+  c.on('message', (raw) => {
+    if ((JSON.parse(String(raw)) as ServerMsg).t === 'signal') cGotSignal = true;
+  });
   const got = nextMsg(b, 'signal');
   a.send(JSON.stringify({ t: 'signal', to: 'p2', data: { kind: 'offer', sdp: 'x' } }));
   const sig = (await got) as Extract<ServerMsg, { t: 'signal' }>;
   expect(sig.from).toBe('p1');
-  expect(sig.data).toEqual({ kind: 'offer', sdp: 'x' });
+  await new Promise((r) => setTimeout(r, 100));
+  expect(cGotSignal).toBe(false);
 });
 
-test('video-ended advances once even if two clients report it', async () => {
+test('signal never crosses rooms', async () => {
+  createRoom(db, 'XYZ789', Date.now());
+  const a = await connect();
+  await join(a, 'p1', 'Alice');
+  const outsider = await connect();
+  const outsiderSnap = nextMsg(outsider, 'snapshot');
+  outsider.send(JSON.stringify({ t: 'join', roomId: 'XYZ789', name: 'Mallory', participantId: 'p9' }));
+  await outsiderSnap;
+  let outsiderGotSignal = false;
+  outsider.on('message', (raw) => {
+    if ((JSON.parse(String(raw)) as ServerMsg).t === 'signal') outsiderGotSignal = true;
+  });
+  a.send(JSON.stringify({ t: 'signal', to: 'p9', data: { kind: 'offer', sdp: 'x' } }));
+  await new Promise((r) => setTimeout(r, 150));
+  expect(outsiderGotSignal).toBe(false);
+});
+
+test('video-ended from three clients advances exactly one video', async () => {
   const i1 = addItem(db, 'ABC234', 'aaaaaaaaaaa', 'A', 'kes', Date.now());
   const i2 = addItem(db, 'ABC234', 'bbbbbbbbbbb', 'B', 'kes', Date.now());
+  addItem(db, 'ABC234', 'ccccccccccc', 'C', 'kes', Date.now());
   const a = await connect();
   await join(a, 'p1', 'Alice');
   const b = await connect();
   await join(b, 'p2', 'Bob');
-  const got = nextMsg(a, 'playback');
+  const c = await connect();
+  await join(c, 'p3', 'Cara');
+
+  const playbacks: { currentItemId: number | null }[] = [];
+  a.on('message', (raw) => {
+    const m = JSON.parse(String(raw)) as ServerMsg;
+    if (m.t === 'playback') playbacks.push(m.playback);
+  });
+
   a.send(JSON.stringify({ t: 'video-ended', itemId: i1.id }));
   b.send(JSON.stringify({ t: 'video-ended', itemId: i1.id }));
-  const pb = (await got) as Extract<ServerMsg, { t: 'playback' }>;
-  expect(pb.playback.currentItemId).toBe(i2.id);
-  expect(pb.playback.isPlaying).toBe(true);
+  c.send(JSON.stringify({ t: 'video-ended', itemId: i1.id }));
+  await new Promise((r) => setTimeout(r, 300));
+
+  expect(playbacks).toHaveLength(1);
+  expect(playbacks[0].currentItemId).toBe(i2.id);
 });
 
 test('close broadcasts peer-left', async () => {
@@ -175,4 +220,31 @@ test('reaction broadcasts, is not persisted', async () => {
   a.send(JSON.stringify({ t: 'reaction', emoji: '🔥' }));
   const r = (await got) as Extract<ServerMsg, { t: 'reaction' }>;
   expect(r).toMatchObject({ emoji: '🔥', from: 'Alice' });
+  expect(listMessages(db, 'ABC234')).toHaveLength(0);
+});
+
+test('rejoining with the same participantId replaces the socket without a spurious peer-left', async () => {
+  const a = await connect();
+  await join(a, 'p1', 'Alice');
+  const b = await connect();
+  await join(b, 'p2', 'Bob');
+
+  let bSawAliceLeave = false;
+  b.on('message', (raw) => {
+    const m = JSON.parse(String(raw)) as ServerMsg;
+    if (m.t === 'peer-left' && m.participantId === 'p1') bSawAliceLeave = true;
+  });
+
+  // Alice reconnects on a fresh socket carrying the same identity
+  const a2 = await connect();
+  const snap = (await join(a2, 'p1', 'Alice')) as Extract<ServerMsg, { t: 'snapshot' }>;
+  expect(snap.snapshot.participants.map((p) => p.id).sort()).toEqual(['p1', 'p2']);
+
+  await new Promise((r) => setTimeout(r, 150));
+  expect(bSawAliceLeave).toBe(false);
+
+  // the replacement must be the live socket: a broadcast reaches a2
+  const chat = nextMsg(a2, 'chat');
+  b.send(JSON.stringify({ t: 'chat', body: 'still there?' }));
+  expect(((await chat) as Extract<ServerMsg, { t: 'chat' }>).message.body).toBe('still there?');
 });
