@@ -41,6 +41,12 @@ export class PeerMesh {
 
   /** Called with the other participants' ids when OUR snapshot arrives: we are the newcomer, we offer. */
   offerTo(peerIds: string[]): void {
+    // the snapshot is authoritative: anyone we still hold who isn't in it left while we were
+    // disconnected, and we never received their peer-left
+    const present = new Set(peerIds);
+    for (const id of [...this.peers.keys()]) {
+      if (!present.has(id)) this.drop(id);
+    }
     for (const id of peerIds) {
       this.initiate(id).catch((err) => console.warn('[rtc] failed to offer to', id, err));
     }
