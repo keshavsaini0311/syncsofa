@@ -81,6 +81,17 @@ describe('roomReducer', () => {
     expect(s.error).toBe('room-not-found');
   });
 
+  test('an error is recorded and can be cleared', () => {
+    const withError = apply([{ t: 'snapshot', snapshot }, { t: 'error', code: 'bad-url' }]);
+    expect(withError.error).toBe('bad-url');
+
+    const cleared = roomReducer(withError, { t: 'error-cleared' });
+    expect(cleared.error).toBeNull();
+
+    // clearing again is a no-op and must return the identical reference
+    expect(roomReducer(cleared, { t: 'error-cleared' })).toBe(cleared);
+  });
+
   test('a state-changing action returns new objects and leaves the old ones untouched', () => {
     const before = apply([{ t: 'snapshot', snapshot }]);
     const participantsRef = before.participants;

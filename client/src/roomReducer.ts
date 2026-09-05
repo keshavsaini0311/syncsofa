@@ -29,13 +29,17 @@ export const initialState: RoomState = {
 export type Action =
   | { t: 'server'; msg: ServerMsg; key?: number }
   | { t: 'reaction-expired'; key: number }
-  | { t: 'disconnected' };
+  | { t: 'disconnected' }
+  | { t: 'error-cleared' };
 
 export function roomReducer(state: RoomState, action: Action): RoomState {
   if (action.t === 'reaction-expired') {
     return { ...state, reactions: state.reactions.filter((r) => r.key !== action.key) };
   }
   if (action.t === 'disconnected') return { ...state, joined: false };
+  if (action.t === 'error-cleared') {
+    return state.error ? { ...state, error: null } : state;
+  }
 
   const msg = action.msg;
   switch (msg.t) {

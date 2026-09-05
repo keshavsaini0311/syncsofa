@@ -9,6 +9,15 @@ import { RoomSocket } from './ws';
 import { PeerMesh } from './rtc';
 import { CallStrip } from './CallStrip';
 
+const ERROR_MESSAGES: Record<string, string> = {
+  'bad-url': 'That doesn’t look like a YouTube link.',
+  'bad-join': 'Could not join this room — try reloading.',
+};
+
+function errorMessage(code: string): string {
+  return ERROR_MESSAGES[code] ?? 'Something went wrong.';
+}
+
 export function Room({ roomId }: { roomId: string }) {
   const [name, setName] = useState<string | null>(() => localStorage.getItem('syncsofa-name'));
   if (!name) {
@@ -80,6 +89,11 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         const key = ++reactionKey.current;
         dispatch({ t: 'server', msg, key });
         setTimeout(() => dispatch({ t: 'reaction-expired', key }), 3000);
+        return;
+      }
+      if (msg.t === 'error' && msg.code !== 'room-not-found') {
+        dispatch({ t: 'server', msg });
+        setTimeout(() => dispatch({ t: 'error-cleared' }), 4000);
         return;
       }
       dispatch({ t: 'server', msg });
@@ -162,6 +176,9 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         </aside>
       </main>
       {!state.joined && <div className="banner">Connecting…</div>}
+      {state.error && state.error !== 'room-not-found' && (
+        <div className="banner error">{errorMessage(state.error)}</div>
+      )}
     </div>
   );
 }

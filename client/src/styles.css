@@ -69,6 +69,7 @@ aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 .call-controls { display: flex; flex-direction: column; gap: 6px; }
 
 .banner { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 6px 16px; border-radius: 999px; }
+.banner.error { background: #c0392b; }
 
 @media (max-width: 800px) {
   .room main { grid-template-columns: 1fr; overflow-y: auto; }
