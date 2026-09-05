@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { expectedTime, needsCorrection, type ClientMsg, type PlaybackState } from '@syncsofa/shared';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -12,12 +12,19 @@ declare global {
 let apiPromise: Promise<any> | null = null;
 function loadYT(): Promise<any> {
   if (!apiPromise) {
-    apiPromise = new Promise((resolve) => {
+    apiPromise = new Promise((resolve, reject) => {
       if (window.YT?.Player) return resolve(window.YT);
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
+      tag.onerror = () => reject(new Error('failed to load the YouTube IFrame API'));
       document.head.appendChild(tag);
       window.onYouTubeIframeAPIReady = () => resolve(window.YT);
+      // ponytail: plain timeout, no retry — a blocked script does not recover on its own
+      setTimeout(() => reject(new Error('YouTube IFrame API timed out')), 10_000);
+    });
+    // let a later mount try again rather than caching the failure forever
+    apiPromise.catch(() => {
+      apiPromise = null;
     });
   }
   return apiPromise;
@@ -36,6 +43,8 @@ export function Player({ videoId, itemId, playback, send }: Props) {
   const ready = useRef(false);
   const suppressUntil = useRef(0);
   const lastPolled = useRef(-1);
+  const lastTickAt = useRef(0);
+  const [failed, setFailed] = useState(false);
 
   // refs so the once-registered YT callbacks never see stale props
   const playbackRef = useRef(playback);
@@ -80,6 +89,8 @@ export function Player({ videoId, itemId, playback, send }: Props) {
           },
         },
       });
+    }).catch(() => {
+      if (!disposed) setFailed(true);
     });
     return () => {
       disposed = true;
@@ -89,17 +100,6 @@ export function Player({ videoId, itemId, playback, send }: Props) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // switch video when the current playlist item changes
-  useEffect(() => {
-    const p = player.current;
-    if (!ready.current || !p?.loadVideoById) return;
-    const pb = playbackRef.current;
-    suppressUntil.current = Date.now() + 1500;
-    lastPolled.current = -1;
-    p.loadVideoById(videoId, pb ? Math.max(0, expectedTime(pb, Date.now())) : 0);
-    if (pb && !pb.isPlaying) setTimeout(() => player.current?.pauseVideo?.(), 600);
-  }, [videoId]);
 
   // apply every remote playback change
   useEffect(() => {
@@ -113,22 +113,49 @@ export function Player({ videoId, itemId, playback, send }: Props) {
       const p = player.current;
       const pb = playbackRef.current;
       if (!ready.current || !p?.getCurrentTime || !pb) return;
+
+      const now = Date.now();
+      const elapsed = lastTickAt.current ? (now - lastTickAt.current) / 1000 : 1;
+      lastTickAt.current = now;
+
+      // a hidden tab has its timers throttled to ~1/min, which makes our poll baseline
+      // meaningless — resync from the room rather than inferring a seek from the gap
+      if (elapsed > 2) {
+        lastPolled.current = -1;
+        applyRemote();
+        return;
+      }
+
       const local = p.getCurrentTime();
       const playing = p.getPlayerState?.() === 1;
-      if (Date.now() > suppressUntil.current && playing) {
-        // ponytail: seek = time jumped vs last poll; no native seek event exists
-        if (lastPolled.current >= 0 && Math.abs(local - lastPolled.current - 1) > 2.5) {
-          suppressUntil.current = Date.now() + 1000;
+      let polled = local;
+
+      if (now > suppressUntil.current && playing) {
+        // ponytail: seek = time jumped vs last poll; the IFrame API has no seek event
+        if (lastPolled.current >= 0 && Math.abs(local - lastPolled.current - elapsed) > 2.5) {
+          suppressUntil.current = now + 1000;
           sendRef.current({ t: 'seek', time: local });
-        } else if (needsCorrection(local, expectedTime(pb, Date.now()))) {
-          suppressUntil.current = Date.now() + 1000;
-          p.seekTo(Math.max(0, expectedTime(pb, Date.now())), true);
+        } else {
+          const expected = Math.max(0, expectedTime(pb, now));
+          if (needsCorrection(local, expected)) {
+            suppressUntil.current = now + 1000;
+            p.seekTo(expected, true);
+            // the next tick must compare against where we just moved to, not where we were
+            polled = expected;
+          }
         }
       }
-      lastPolled.current = local;
+      lastPolled.current = polled;
     }, 1000);
     return () => clearInterval(iv);
   }, []);
 
+  if (failed) {
+    return (
+      <div className="empty">
+        Couldn’t load the YouTube player — an ad blocker or network filter may be blocking it.
+      </div>
+    );
+  }
   return <div className="yt-holder" ref={holder} />;
 }
