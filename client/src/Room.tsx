@@ -100,7 +100,6 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
                 <div className="empty">Paste a YouTube link to start watching together.</div>
               )}
               <ReactionOverlay reactions={state.reactions} />
-              <ReactionBar send={send} />
             </div>
           </div>
           <CallStrip
@@ -113,6 +112,7 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
           />
         </div>
         <aside>
+          <ReactionBar send={send} />
           <Playlist items={state.playlist} currentItemId={state.playback?.currentItemId ?? null} send={send} />
           <Chat messages={state.messages} send={send} selfName={name} />
         </aside>

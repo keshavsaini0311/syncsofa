@@ -6,12 +6,15 @@ const EMOJIS = ['❤️', '😂', '😮', '👏', '🔥', '😢'];
 
 export const ReactionBar = memo(function ReactionBar({ send }: { send: (m: ClientMsg) => void }) {
   return (
-    <div className="reaction-bar">
-      {EMOJIS.map((e) => (
-        <button key={e} onClick={() => send({ t: 'reaction', emoji: e })}>
-          {e}
-        </button>
-      ))}
+    <div className="panel reaction-panel">
+      <span className="reaction-label">React</span>
+      <div className="reaction-bar">
+        {EMOJIS.map((e) => (
+          <button key={e} onClick={() => send({ t: 'reaction', emoji: e })}>
+            {e}
+          </button>
+        ))}
+      </div>
     </div>
   );
 });

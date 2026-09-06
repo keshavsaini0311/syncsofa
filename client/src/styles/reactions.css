@@ -1,37 +1,36 @@
 /* ---------- reactions ---------- */
 
-/* overlaid on .video-wrap as a vertical strip on the right edge, centred vertically. YouTube's
-   own chrome occupies two full-width bands — the title across the top, the control bar
-   (scrubber, time, fullscreen) across the bottom — so any *horizontal* overlay along either
-   edge collides with one of them. A vertically-centred column on the right is clear of both:
-   nothing YouTube draws there except the fullscreen button, tucked in the bottom-right corner,
-   which a strip that stops well short of the bottom edge never reaches.
-   pointer-events: none on the wrapper + auto on the buttons so the scrim between buttons
-   doesn't steal clicks meant for the player underneath. */
-.reaction-bar {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
+/* the button row lives in the right sidebar now (Room.tsx), above the "Up next" panel — a
+   compact control strip, not a feature panel. .reaction-panel reuses .panel's Living Room
+   surface (teak, seam border, radius, lamp-edge highlight) so the column still reads as three
+   stacked panels, but overrides the column layout/flex-grow .panel assumes: this one is a
+   single row that never grows and never steals height from the playlist/chat panels below it,
+   both of which already scroll (panels.css). */
+.reaction-panel {
+  flex: 0 0 auto;
+  flex-direction: row;
   align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+.reaction-label {
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faded-panel);
+}
+.reaction-bar {
+  display: flex;
+  flex: 1 1 auto;
   gap: 8px;
-  padding: 10px 8px;
-  pointer-events: none;
-  background: rgba(24, 16, 8, 0.45);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 14px;
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 .reaction-bar button {
-  pointer-events: auto;
+  flex: 1 1 0;
+  min-width: 36px;
   font-size: 1rem;
   line-height: 1;
-  width: 34px;
-  height: 34px;
+  height: 38px;
   padding: 0;
   display: grid;
   place-items: center;

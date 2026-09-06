@@ -182,10 +182,12 @@ aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-heig
 /* ---------- player hint ---------- */
 /* small, dismissible notice for signals inferred without reading the cross-origin iframe: a
    YT.Player onError code, or the stall watchdog (useSyncedPlayer.ts). Left edge, vertically
-   centred — mirrors .reaction-bar's placement on the right (reactions.css) so the two never
-   collide, and stays clear of YouTube's own title (top) and control (bottom) bands the same
-   way that strip does. pointer-events: none on the wrapper + auto on the dismiss button/link
-   so it never blocks clicks on the player underneath. */
+   centred, and clear of YouTube's own title (top) and control (bottom) bands — including the
+   fullscreen button in the bottom-right corner, since this sits on the opposite side and stops
+   well short of both edges. pointer-events: none on the wrapper + auto on the dismiss
+   button/link so it never blocks clicks on the player underneath. The reaction button bar no
+   longer overlays the video (it lives in the sidebar, reactions.css) so this is now the only
+   thing anchored over the player besides the floating reaction animation itself. */
 .player-hint {
   position: absolute;
   top: 50%;
