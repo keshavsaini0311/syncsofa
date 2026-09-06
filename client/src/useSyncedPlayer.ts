@@ -13,6 +13,15 @@ type Args = {
 
 export type Expectation = { state: number; until: number };
 
+// UX safety net only — an *observer* of the player, never a participant in sync logic.
+// The iframe is cross-origin so we can't read the "sign in to confirm you're not a bot"
+// interstitial directly; these are the only two signals we get. onError codes are the
+// documented YT.Player ones. 'stalled' is inferred: the room says playing but the player
+// never reports back PLAYING within STALL_MS — that's what a bot-check interstitial or an
+// aggressive ad/privacy blocker looks like from here, since nothing else produces that gap.
+export type HintKind = 'stalled' | 'invalid' | 'html5-error' | 'unavailable' | 'embed-disabled';
+const STALL_MS = 12000;
+
 // Pure echo-suppression queue rules, pulled out of the hook so they're unit-testable without a
 // real (or mocked) YT.Player: the hook only ever talks to the player through these two decisions.
 //
@@ -68,6 +77,7 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
   // guards the divergence reconciliation below from fighting a broadcast we just made ourselves
   const pendingUntil = useRef(0);
   const [failed, setFailed] = useState(false);
+  const [hint, setHint] = useState<HintKind | null>(null);
 
   // refs so the once-registered YT callbacks never see stale props
   const playbackRef = useRef(playback);
@@ -126,7 +136,18 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
             ready.current = true;
             applyRemote();
           },
+          onError: (e: any) => {
+            // distinguishable, documented YT.Player error codes — genuinely different failures,
+            // so they get genuinely different copy (101/150 in particular: no browser setting fixes it)
+            if (e.data === 101 || e.data === 150) setHint('embed-disabled');
+            else if (e.data === 100) setHint('unavailable');
+            else if (e.data === 2) setHint('invalid');
+            else if (e.data === 5) setHint('html5-error');
+          },
           onStateChange: (e: any) => {
+            // the only unambiguous "it's actually playing" signal — clear any hint the moment it
+            // fires, echo or not, so a stale warning never sits over a video that recovered
+            if (e.data === 1) setHint(null);
             // ENDED is never an echo worth discarding: a programmatic seek past the end is still
             // a genuine advance, and if every client suppresses it the room stalls forever
             if (e.data === 0) {
@@ -240,5 +261,17 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
     return () => clearInterval(iv);
   }, []);
 
-  return { holder, failed };
+  // stall watchdog: room says playing, so give the player STALL_MS to actually get there.
+  // Restarts on every play/pause flip (a resume can stall too, e.g. re-buffering). Only sets
+  // the hint if nothing more specific (an onError) already did, and never clobbers a hint that
+  // already cleared because playback caught up in the meantime.
+  useEffect(() => {
+    if (!playback?.isPlaying) return;
+    const t = setTimeout(() => {
+      if (player.current?.getPlayerState?.() !== 1) setHint((h) => h ?? 'stalled');
+    }, STALL_MS);
+    return () => clearTimeout(t);
+  }, [playback?.isPlaying]);
+
+  return { holder, failed, hint, dismissHint: () => setHint(null) };
 }
