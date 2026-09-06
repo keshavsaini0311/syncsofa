@@ -11,6 +11,45 @@ type Args = {
   send: (m: ClientMsg) => void;
 };
 
+export type Expectation = { state: number; until: number };
+
+// Pure echo-suppression queue rules, pulled out of the hook so they're unit-testable without a
+// real (or mocked) YT.Player: the hook only ever talks to the player through these two decisions.
+//
+// Decide the updated queue after applyRemote drives the player toward `targetState` (1 = playing,
+// 2 = paused). Drops expired entries and any stale entry for this same state — at most one
+// pending expectation per state, so an earlier still-live one can't outlive the transition it was
+// for and later swallow an unrelated genuine action once the real event finally arrives and
+// consumes a *different* queued entry. Then, unless the player is already effectively in the
+// target state (playVideo()/pauseVideo() would be a no-op — no event will ever fire to consume an
+// expectation for it), queues a fresh one with a 5s deadline, long enough to survive a slow buffer.
+export function updateExpecting(
+  queue: Expectation[],
+  targetState: number,
+  currentState: number | undefined,
+  now: number,
+): Expectation[] {
+  const next = queue.filter((e) => now < e.until && e.state !== targetState);
+  const alreadyThere = targetState === 1 ? currentState === 1 : currentState !== 1 && currentState !== 3;
+  if (!alreadyThere) next.push({ state: targetState, until: now + 5000 });
+  return next;
+}
+
+// Match a real onStateChange event against the queue. A hit means this event is the echo our own
+// applyRemote caused — consume it (remove just that one entry) and discard the event. No hit means
+// it's a genuine local action (play/pause/seek) to report.
+export function consumeExpecting(
+  queue: Expectation[],
+  eventState: number,
+  now: number,
+): { echo: boolean; queue: Expectation[] } {
+  const idx = queue.findIndex((e) => e.state === eventState && now < e.until);
+  if (idx === -1) return { echo: false, queue };
+  const next = queue.slice();
+  next.splice(idx, 1);
+  return { echo: true, queue: next };
+}
+
 // The sync engine: mounts a YT.Player, keeps it converging on the room's playback state, and
 // reports local user actions (play/pause/seek/end) back to the room without echoing our own
 // remote-driven changes. See the comments below — each one is the record of a bug already paid for.
@@ -45,8 +84,10 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
     suppressUntil.current = Date.now() + 1000;
     // long deadline is safe because we match on state, not time
     const now = Date.now();
-    expecting.current = expecting.current.filter((e) => now < e.until);
-    expecting.current.push({ state: pb.isPlaying ? 1 : 2, until: now + 5000 });
+    // see updateExpecting: this is what let a real early pause get swallowed — onReady used to
+    // unconditionally queue a PAUSED echo that could never arrive, because the freshly-loaded
+    // player wasn't playing yet to pause *from*, and it sat there for its full deadline
+    expecting.current = updateExpecting(expecting.current, pb.isPlaying ? 1 : 2, p.getPlayerState?.(), now);
     const expected = Math.max(0, expectedTime(pb, Date.now()));
     // we know exactly where this puts the player — say so, so the anchor can never go stale
     // across a remote-driven move (buffering or not), which is what let case 4 misread a
@@ -87,12 +128,9 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
               return;
             }
             const nowSc = Date.now();
-            const expIdx = expecting.current.findIndex((exp) => exp.state === e.data && nowSc < exp.until);
-            if (expIdx !== -1) {
-              // this is the event our own applyRemote caused — consume it, don't echo it
-              expecting.current.splice(expIdx, 1);
-              return;
-            }
+            const consumed = consumeExpecting(expecting.current, e.data, nowSc);
+            expecting.current = consumed.queue;
+            if (consumed.echo) return;
             // any other transition is the local user acting, even if it lands moments after a
             // remote change — that is precisely the case the old time window swallowed
             const time = player.current?.getCurrentTime?.() ?? 0;

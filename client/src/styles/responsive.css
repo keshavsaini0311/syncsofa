@@ -6,7 +6,13 @@
   .room main { grid-template-columns: 1fr; overflow-y: auto; padding: 12px; gap: 12px; }
   .room header { padding: 10px 14px; }
   .video-wrap { min-height: 200px; }
-  aside { min-height: auto; }
+  /* the single-column grid track (aside) and the flex item that actually overflows it
+     (.playlist li .title, which relies on white-space: nowrap + text-overflow: ellipsis in
+     panels.css) both default to min-width: auto — refusing to shrink below their content's
+     width. A long title's unwrapped intrinsic width then becomes the grid track's minimum,
+     blowing the whole row past the viewport before the ellipsis ever gets a chance to engage. */
+  aside { min-height: auto; min-width: 0; }
+  .playlist li .title { min-width: 0; }
   .tile { width: 116px; }
 }
 
