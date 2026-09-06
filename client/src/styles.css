@@ -105,6 +105,26 @@ a { color: var(--glow); text-underline-offset: 2px; }
   text-align: center;
 }
 
+/* join-name form (Room.tsx, before entering a room) — same boxed card as .home-join,
+   but the input holds a person's name, so no mono/uppercase room-code treatment. */
+.join-box { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--haze); border-radius: 14px; padding: 14px; }
+.home-roomid { font-family: var(--font-mono); letter-spacing: 0.08em; }
+
+/* small caps eyebrow, reused from the panel-label idiom for the error/status screens */
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+/* error/status screens (room-not-found, replaced, bad-identity, room-full) share .home's
+   hero treatment; de-emphasize the wordmark and let the message carry the screen. */
+.home-status { gap: 18px; }
+.home-status h1 { font-size: 1.3rem; opacity: 0.7; }
+.home-status p { color: var(--text); font-size: 1rem; }
+
 /* ---------- room shell ---------- */
 
 .room {
@@ -138,9 +158,9 @@ a { color: var(--glow); text-underline-offset: 2px; }
 }
 
 .room header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  flex-wrap: wrap;
   gap: 14px;
   padding: 12px 20px;
   background: var(--surface);
@@ -156,21 +176,24 @@ a { color: var(--glow); text-underline-offset: 2px; }
   align-items: center;
   gap: 6px;
 }
+/* the room code is the header's hero — the one thing a host hands someone, set like a
+   door number rather than a chip: mono, large, wide-tracked, and centered in the header. */
 .room-code {
+  justify-self: center;
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 1.1rem;
-  letter-spacing: 0.18em;
+  font-size: 1.5rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   background: var(--haze);
   color: var(--text);
   border: 1px solid transparent;
-  padding: 8px 16px;
+  padding: 10px 22px;
 }
 .room-code:hover:not(:disabled) { background: var(--haze); border-color: var(--glow); }
 
 .presence {
-  margin-left: auto;
+  justify-self: end;
   color: var(--muted);
   font-size: 0.85rem;
   display: flex;
@@ -447,4 +470,10 @@ aside { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
   .video-wrap { min-height: 200px; }
   aside { min-height: auto; }
   .tile { width: 116px; }
+}
+
+@media (max-width: 480px) {
+  .room header { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .room-code { font-size: 1.2rem; letter-spacing: 0.16em; }
+  .presence { justify-self: center; }
 }

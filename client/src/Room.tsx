@@ -38,11 +38,14 @@ function JoinForm({ roomId, onJoin }: { roomId: string; onJoin: (name: string) =
   const [name, setName] = useState('');
   return (
     <div className="home">
-      <h1>🛋️ syncsofa</h1>
-      <p>
-        Joining room <b>{roomId}</b>
-      </p>
+      <div className="home-hero">
+        <h1>🛋️ syncsofa</h1>
+        <p className="home-tagline">
+          Joining room <b className="home-roomid">{roomId}</b>
+        </p>
+      </div>
       <form
+        className="join-box"
         onSubmit={(e) => {
           e.preventDefault();
           if (name.trim()) onJoin(name.trim().slice(0, 40));
@@ -160,7 +163,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
 
   if (state.error === 'room-not-found') {
     return (
-      <div className="home">
+      <div className="home home-status">
+        <span className="eyebrow">Room unavailable</span>
         <h1>🛋️ syncsofa</h1>
         <p>Room {roomId} doesn’t exist.</p>
         <a href="/">Go home</a>
@@ -170,7 +174,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
 
   if (state.error === 'replaced') {
     return (
-      <div className="home">
+      <div className="home home-status">
+        <span className="eyebrow">Opened elsewhere</span>
         <h1>🛋️ syncsofa</h1>
         <p>This room was opened in another tab or window, so this one disconnected.</p>
         <button className="primary" onClick={() => location.reload()}>
@@ -182,7 +187,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
 
   if (state.error === 'bad-identity') {
     return (
-      <div className="home">
+      <div className="home home-status">
+        <span className="eyebrow">Identity conflict</span>
         <h1>🛋️ syncsofa</h1>
         <p>Couldn’t rejoin — this room already has someone using this tab’s identity. Reload to join as a new participant.</p>
         <button
@@ -201,7 +207,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
 
   if (state.error === 'room-full') {
     return (
-      <div className="home">
+      <div className="home home-status">
+        <span className="eyebrow">Room full</span>
         <h1>🛋️ syncsofa</h1>
         <p>This room is full (6 people max — the video call connects everyone directly, so it doesn’t scale past that).</p>
       </div>
@@ -211,7 +218,7 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const currentItem = state.playlist.find((i) => i.id === state.playback?.currentItemId) ?? null;
 
   return (
-    <div className="room">
+    <div className={`room${state.playback?.isPlaying ? ' is-playing' : ''}`}>
       <header>
         <a href="/" className="brand">🛋️ syncsofa</a>
         <button className="room-code" onClick={copyInvite} title="Copy invite link">
@@ -231,7 +238,7 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
                 send={send}
               />
             ) : (
-              <div className="empty">Add a YouTube link to get started →</div>
+              <div className="empty">Paste a YouTube link to start watching together.</div>
             )}
             <ReactionOverlay reactions={state.reactions} />
           </div>
