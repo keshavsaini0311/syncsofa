@@ -58,4 +58,11 @@ describe('fetchTitle', () => {
     await fetchTitle('dQw4w9WgXcQ', fake);
     expect(requested).toContain(encodeURIComponent('https://youtu.be/dQw4w9WgXcQ'));
   });
+  test('falls back to videoId when the request times out', async () => {
+    const fake = ((_url: string, init?: { signal?: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      })) as unknown as typeof fetch;
+    await expect(fetchTitle('dQw4w9WgXcQ', fake)).resolves.toBe('dQw4w9WgXcQ');
+  }, 10_000);
 });

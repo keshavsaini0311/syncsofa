@@ -28,6 +28,9 @@ export async function fetchTitle(videoId: string, fetchFn: typeof fetch = fetch)
   try {
     const res = await fetchFn(
       `https://www.youtube.com/oembed?url=${encodeURIComponent(`https://youtu.be/${videoId}`)}&format=json`,
+      // a title is a nicety; the hub awaits this before storing and broadcasting the item, so a
+      // slow oEmbed would stall the paste for everyone in the room. Fall back rather than hang.
+      { signal: AbortSignal.timeout(3000) },
     );
     if (!res.ok) return videoId;
     const data = (await res.json()) as { title?: unknown };
