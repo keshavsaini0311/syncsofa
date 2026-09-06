@@ -1,0 +1,15 @@
+/* Thin manifest — Vite inlines these @imports at build time, no runtime request cost.
+   Order matters: tokens before everything (custom properties), base before components
+   (element selectors must not outrank component classes), then components in an order
+   that preserves the original single-file cascade, responsive last (it must win over
+   every component default it overrides). See css-split-report.md for the full reasoning. */
+
+@import './styles/tokens.css';
+@import './styles/themes.css';
+@import './styles/base.css';
+@import './styles/home.css';
+@import './styles/room.css';
+@import './styles/panels.css';
+@import './styles/reactions.css';
+@import './styles/call.css';
+@import './styles/responsive.css';

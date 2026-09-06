@@ -1,0 +1,25 @@
+{
+  "name": "syncsofa",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "dev": "concurrently -k \"npm run dev -w server\" \"npm run dev -w client\"",
+    "test": "npm run test -w server && npm run test -w client",
+    "typecheck": "npm run typecheck --workspaces",
+    "build": "npm run build -w client",
+    "start": "npm run start -w server",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "concurrently": "^9.0.0"
+  }
+}

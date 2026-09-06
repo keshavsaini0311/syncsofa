@@ -1,0 +1,36 @@
+/* ---------- responsive ---------- */
+/* breakpoint overrides for the room shell (room.css), panels (panels.css), and call strip
+   (call.css) — must load after all three so these rules win the cascade over the component
+   defaults.
+
+   Below ~900px the two columns stack and can't all fit one viewport at once (video + call
+   strip + reactions + full playlist + full chat), so below this point we deliberately drop
+   the no-scroll app shell and let the page scroll like a normal document instead. */
+
+@media (max-width: 900px) {
+  .room { height: auto; min-height: 100dvh; overflow: visible; padding: 12px; gap: 12px; }
+  .room header { padding: 8px 4px; }
+  .room main { grid-template-columns: 1fr; }
+  .stage, aside { min-height: auto; }
+  .video-stage { flex: none; min-height: 220px; }
+  .panel { flex: none; min-height: auto; }
+  .playlist ul, .chat-log { flex: none; min-height: auto; overflow-y: visible; }
+
+  /* the single-column grid track (aside) and the flex item that actually overflows it
+     (.playlist li .text, which relies on white-space: nowrap + text-overflow: ellipsis on
+     .title in panels.css) both default to min-width: auto — refusing to shrink below their
+     content's width. A long title's unwrapped intrinsic width then becomes the grid track's
+     minimum, blowing the whole row past the viewport before the ellipsis ever gets a chance
+     to engage. panels.css already sets min-width: 0 on .text unconditionally; kept here too
+     so this fix reads self-contained at the breakpoint that motivated it. */
+  aside { min-width: 0; }
+  .playlist li .text { min-width: 0; }
+  .tile { width: 104px; }
+}
+
+@media (max-width: 480px) {
+  .room header { flex-direction: column; text-align: center; gap: 8px; padding: 6px 4px; }
+  .topbar-right { justify-content: center; }
+  .room-code { font-size: 1.1rem; letter-spacing: 0.16em; }
+  .copy-btn { padding: 6px 12px; font-size: 0.8rem; }
+}

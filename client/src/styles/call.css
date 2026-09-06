@@ -1,0 +1,77 @@
+/* ---------- call strip ---------- */
+/* a warm surface bar (matches the panels) rather than a bare row; flex-shrink: 0 so it keeps
+   its natural height while .video-stage absorbs any shortfall on a short window. No height or
+   flex-grow is ever set here — the wrap is already exactly tile-height plus this padding plus
+   the heading row (nothing claims extra band beyond that), so with one small participant tile
+   it reads as a snug strip rather than a mostly-empty band, and it only grows if the tiles
+   themselves ever need more room. Note: video-stage's height feeds .video-wrap's own
+   percentage-height/aspect-ratio sizing (room.css), so trimming this padding further to look
+   even tighter would hand .video-wrap more height than its width supports and quietly bend the
+   16:9 box off-ratio — left as-is deliberately. The heading row carries the mic/camera toggles
+   so a single participant reads as "the sofa, one seat filled" rather than a mostly-empty box
+   with controls stacked beside a tiny tile. */
+
+.call-strip-wrap {
+  flex-shrink: 0;
+  background: var(--teak);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  padding: 16px;
+}
+.call-strip-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.call-strip-heading h2 { font-size: 0.95rem; }
+
+.call-strip {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-start;
+  overflow-x: auto;
+}
+.tile {
+  position: relative;
+  width: 120px;
+  aspect-ratio: 4 / 3;
+  flex-shrink: 0;
+  background: var(--wall);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+/* sage is reserved for live states only — this is the one place it belongs */
+.tile.connected {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 1px var(--sage), 0 0 14px rgba(126, 155, 122, 0.35);
+}
+.tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tile .no-cam { display: grid; place-items: center; height: 100%; color: var(--faded-panel); font-size: 1.3rem; }
+.tile-name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 18px 8px 6px;
+  font-size: 0.72rem;
+  color: var(--cream);
+  background: linear-gradient(to top, rgba(20, 14, 8, 0.7), transparent);
+}
+
+.call-controls { display: flex; gap: 8px; flex-shrink: 0; }
+.call-controls button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  background: var(--wall);
+  border: 1px solid var(--seam);
+}
+.call-controls button.off { color: var(--faded-panel); opacity: 0.85; }

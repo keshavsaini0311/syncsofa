@@ -1,0 +1,288 @@
+/* ---------- room shell ---------- */
+/* 100dvh (not 100vh) so the mobile browser toolbar can't inflate the shell past the real
+   visible viewport and reintroduce page scroll. Nothing sets an overflow rule on html/body:
+   .room itself is the fixed-height, overflow-hidden box, so as long as every flex/grid
+   ancestor between here and the two scroll panels carries min-height: 0, .room simply clips
+   its own overflow and the document never needs to scroll. Below ~900px (responsive.css)
+   this is deliberately reverted to a normal scrolling document. */
+
+.room {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: clamp(20px, 2.4vw, 32px);
+  background: var(--wall);
+  color: var(--cream);
+  overflow: hidden;
+}
+
+/* Slim header bar, not a panel: no teak fill/border/radius/shadow — it sits directly on the
+   --wall page ground. Padding alone (no background) keeps total height in the ~40-48px band
+   so the 16:9 video (which derives its size from this box's leftover height) gets that back. */
+.room header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 2px;
+}
+.brand {
+  text-decoration: none;
+  color: var(--cream);
+  font-family: var(--font-display);
+  font-variation-settings: 'CASL' 1, 'wght' 700;
+  font-weight: 700;
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.brand-dot { color: var(--mustard); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+/* the room code is the header's hero, but rendered in Rubik rather than mono — mono reads
+   technical and fights the warm, casual register of this direction. */
+.room-code-group { display: flex; align-items: center; gap: 8px; }
+.room-code-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faded-panel);
+}
+.room-code {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+/* the header no longer supplies a fill of its own, so the button carries the panel treatment
+   that used to belong to the header — teak fill cut out of the --wall ground, same as every
+   other control in this direction (call.css tiles, mute buttons). */
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--teak);
+  border: 1px solid var(--seam);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+}
+.copy-btn:hover:not(:disabled) { border-color: var(--mustard); }
+.copy-icon {
+  width: 12px;
+  height: 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+.copy-icon::before,
+.copy-icon::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.4px solid var(--mustard);
+  border-radius: 2px;
+}
+.copy-icon::before { top: 0; left: 0; background: var(--teak); }
+.copy-icon::after { bottom: 0; right: 0; background: var(--wall); }
+
+.presence {
+  color: var(--faded-panel);
+  font-size: 0.78rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.presence::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--sage);
+  box-shadow: 0 0 8px rgba(126, 155, 122, 0.5);
+  flex-shrink: 0;
+}
+
+/* theme picker: a plain <select>, sized to sit in the slim header without adding to its
+   height — no wrapper panel, just label + control on the --wall ground like the rest of the
+   header. */
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-picker-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faded-panel);
+}
+.theme-picker select {
+  font: inherit;
+  font-size: 0.78rem;
+  background: var(--teak);
+  color: var(--cream);
+  border: 1px solid var(--seam);
+  border-radius: 8px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+.theme-picker select:hover { border-color: var(--mustard); }
+
+
+.room main {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 420px);
+  gap: 20px;
+  align-items: stretch;
+}
+.stage { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+
+/* .video-stage is the flex parent that centres the 16:9 box and absorbs the column's leftover
+   space (flex: 1 1 auto + min-height: 0, same shrink contract as before) so the video shrinks
+   on a short window rather than pushing the call strip off-screen, since .call-strip is
+   flex-shrink: 0. */
+.video-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* lets .video-wrap below query this box's own width/height in cqw/cqh, independent of
+     content size — needed for the contain-fit sizing to see both axes at once. */
+  container-type: size;
+}
+
+/* height-constrained 16:9 box, centred: height: 100% + aspect-ratio derives the width from
+   height, which only holds while the derived width still fits the available column. Shrinking
+   the call strip (call.css) hands .video-stage more height, and on a column that isn't wide
+   enough for that much height at 16:9, width: auto used to hit max-width: 100% and clamp —
+   height stayed put, so the box quietly went off-ratio instead of shrinking (contain never
+   actually happens with only one auto axis). The cqw/cqh pair below is the real fix: given the
+   stage's own box size (container-type: size above), pick whichever of "100% height's matching
+   width" / "100% width's matching height" is smaller — a CSS-only contain-fit that is correct
+   whichever axis is the tighter one. It's a progressive override: unsupporting browsers simply
+   fail to parse the cq* values and keep the height/width/max-width fallback above (same old
+   width-clamp bug on very narrow columns, but every browser this app targets supports it). */
+.video-wrap {
+  position: relative;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  margin-inline: auto;
+  aspect-ratio: 16 / 9;
+  width: min(100%, calc(100cqh * 16 / 9));
+  height: min(100%, calc(100cqw * 9 / 16));
+  background: linear-gradient(160deg, #23201B 0%, #2A2620 55%, #201D18 100%);
+  border: 1px solid var(--seam);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 14px 34px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  transition: box-shadow 600ms ease;
+}
+/* the glow hook: no whole-page peach bloom in this direction, just a lamp warmth on the
+   video's own surround when something is playing. */
+.room.is-playing .video-wrap {
+  box-shadow: 0 14px 34px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge), 0 0 60px 12px rgba(217, 164, 65, 0.22);
+}
+@media (prefers-reduced-motion: reduce) {
+  .video-wrap { transition: none; }
+}
+.video-wrap iframe,
+.video-wrap .yt-holder { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ---------- player hint ---------- */
+/* small, dismissible notice for signals inferred without reading the cross-origin iframe: a
+   YT.Player onError code, or the stall watchdog (useSyncedPlayer.ts). Left edge, vertically
+   centred, and clear of YouTube's own title (top) and control (bottom) bands — including the
+   fullscreen button in the bottom-right corner, since this sits on the opposite side and stops
+   well short of both edges. pointer-events: none on the wrapper + auto on the dismiss
+   button/link so it never blocks clicks on the player underneath. The reaction button bar no
+   longer overlays the video (it lives in the sidebar, reactions.css) so this is now the only
+   thing anchored over the player besides the floating reaction animation itself. */
+.player-hint {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  z-index: 2;
+  max-width: min(280px, 46%);
+  pointer-events: none;
+  background: rgba(24, 16, 8, 0.78);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--seam);
+  border-radius: 12px;
+  padding: 12px 30px 12px 14px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.player-hint p {
+  margin: 0;
+  color: var(--cream);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.player-hint a {
+  pointer-events: auto;
+  color: var(--mustard);
+}
+.player-hint-dismiss {
+  pointer-events: auto;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  color: var(--faded-panel);
+  font-size: 0.9rem;
+  line-height: 1;
+  border-radius: 6px;
+}
+.player-hint-dismiss:hover { color: var(--cream); background: rgba(255, 255, 255, 0.08); }
+
+.empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 0 28px;
+  text-align: center;
+  color: var(--faded-panel);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ---------- banner ---------- */
+/* room-scoped connecting/error toast (Room.tsx), fixed over the room shell */
+
+.banner {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--teak);
+  color: var(--cream);
+  border: 1px solid var(--seam);
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  box-shadow: 0 10px 26px var(--shadow-warm);
+}
+.banner.error { background: var(--danger-bg); color: var(--cream); border-color: var(--rust); }

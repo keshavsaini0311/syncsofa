@@ -1,0 +1,100 @@
+/* ---------- theme palettes ---------- */
+/* Every block below redefines the complete token set from tokens.css — a theme is a palette
+   swap and nothing else, so any component CSS that reaches for var(--wall)/var(--teak)/etc.
+   just works under any of these. --faded-panel and --danger-bg are NOT redefined here: both
+   are formulas (tokens.css) that reference var(--faded)/var(--cream)/var(--rust)/var(--wall),
+   so they recompute correctly per theme without repeating the formula five times.
+
+   Applied via [data-theme] on <html>, set before first paint by the inline script in
+   index.html so there is no flash of the wrong theme. "living-room" is also written out
+   explicitly (even though it's identical to the :root default in tokens.css) so selecting it
+   from the picker is not a special no-op case. */
+
+:root[data-theme='living-room'] {
+  --wall: #201D18;
+  --teak: #2E2921;
+  --seam: #47402F;
+  --mustard: #C99A4C;
+  --rust: #B5543A;
+  --sage: #7E9B7A;
+  --cream: #F0E9DC;
+  --faded: #A79C8C;
+  --on-accent: #2A2010;
+  --shadow-warm: rgba(14, 9, 4, 0.46);
+  --lamp-edge: rgba(240, 233, 220, 0.07);
+}
+
+/* Late Show — cold navy ground, one warm brass lamp. Red is reserved for live states only
+   (presence dot, connected call ring); the current-item/danger accent is a deeper brass
+   rather than reaching for a second red. */
+:root[data-theme='late-show'] {
+  --wall: #0B1220;
+  --teak: #141E30;
+  --seam: #22304A;
+  --mustard: #E8B44A;
+  --rust: #B8843A;
+  --sage: #D4453A;
+  --cream: #EDEDE7;
+  --faded: #8794A8;
+  --on-accent: #1A1408;
+  --shadow-warm: rgba(2, 4, 10, 0.5);
+  --lamp-edge: rgba(237, 237, 231, 0.06);
+}
+
+/* Signal — near-monochrome charcoal, one electric blue for everything warm normally does
+   (accent + current-item), green reserved for live only. The brief's exact #3B5BFF reads
+   3.5:1 on this charcoal — short of AA for the real text uses of this token (links, the "you"
+   chat name) — so it's lightened to #6C8CFF, which still reads as the same electric blue and
+   clears 4.5:1 on both surfaces. */
+:root[data-theme='signal'] {
+  --wall: #17181A;
+  --teak: #1F2124;
+  --seam: #303439;
+  --mustard: #6C8CFF;
+  --rust: #6C8CFF;
+  --sage: #34C08A;
+  --cream: #E6E8EA;
+  --faded: #7C838C;
+  --on-accent: #0E1020;
+  --shadow-warm: rgba(3, 4, 5, 0.5);
+  --lamp-edge: rgba(230, 232, 234, 0.05);
+}
+
+/* Matinee — the light direction: sage-grey stock, deep green-black ink, cinema red. Inverts
+   the light/dark relationship (--wall is the lightest colour in this theme, not the darkest),
+   so --teak stays a touch lighter than --wall (a raised card reads lighter, not darker, once
+   the ground itself is light) and --on-accent goes light-on-dark-red rather than dark-on-mustard. */
+:root[data-theme='matinee'] {
+  --wall: #E8EAE6;
+  --teak: #F3F4F1;
+  --seam: #CBCFC7;
+  --mustard: #A83B27;
+  --rust: #A83B27;
+  --sage: #4A6B52;
+  --cream: #1C2118;
+  --faded: #4B5245;
+  --on-accent: #F3F4F1;
+  --shadow-warm: rgba(28, 33, 24, 0.22);
+  --lamp-edge: rgba(255, 255, 255, 0.6);
+}
+
+/* Nightgarden — the fifth, original direction. A deep botanical night rather than another
+   navy/charcoal cool-dark: near-black forest green ground, a soft moon-lit sage-teal lamp
+   accent, and — since green already owns this palette — an amber ember reserved for live
+   states instead of the usual cool note, the inverse of Living Room's "one cool note" rule.
+   Deliberately avoids the purple-blue gradient, acid-green-on-black, and cream/terracotta
+   defaults: no gradient, the green is muted rather than neon, and the warm note is amber, not
+   terracotta cream. */
+:root[data-theme='nightgarden'] {
+  --wall: #10160D;
+  --teak: #1A2216;
+  --seam: #33402C;
+  --mustard: #6FA98C;
+  --rust: #5AA378;
+  --sage: #E0A458;
+  --cream: #E7ECE6;
+  --faded: #8CA091;
+  --on-accent: #0C1109;
+  --shadow-warm: rgba(4, 8, 3, 0.48);
+  --lamp-edge: rgba(231, 236, 230, 0.06);
+}
