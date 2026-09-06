@@ -3,7 +3,7 @@
    base rules generic enough to look right without the hero wrapper below. */
 
 .home {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -11,16 +11,13 @@
   gap: 36px;
   padding: 10vh 20px 6vh;
   text-align: center;
-  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255, 217, 160, 0.1), transparent 70%), var(--ink);
+  background: radial-gradient(ellipse 60% 40% at 50% 0%, rgba(217, 164, 65, 0.12), transparent 70%), var(--wall);
 }
 .home h1 {
-  font-family: var(--font-display);
-  font-weight: 700;
   font-size: clamp(2rem, 6vw, 2.8rem);
-  letter-spacing: -0.01em;
-  margin: 0;
+  letter-spacing: 0.01em;
 }
-.home p { color: var(--muted); margin: 0; max-width: 46ch; line-height: 1.55; }
+.home p { color: var(--faded-panel); margin: 0; max-width: 46ch; line-height: 1.55; }
 .home form { display: flex; gap: 8px; justify-content: center; }
 .home a { display: inline-block; margin-top: 4px; }
 
@@ -31,22 +28,39 @@
 .home-create { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .home-hint { font-size: 0.8rem; }
 
-.home-divider { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
+.home-divider { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--faded-panel); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
 .home-divider::before,
-.home-divider::after { content: ''; flex: 1; height: 1px; background: var(--haze); }
+.home-divider::after { content: ''; flex: 1; height: 1px; background: var(--seam); }
 
-.home-join { width: 100%; background: var(--surface); border: 1px solid var(--haze); border-radius: 14px; padding: 14px; gap: 8px; }
+.home-join {
+  width: 100%;
+  background: var(--teak);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  padding: 14px;
+  gap: 8px;
+}
+/* room code, in Rubik rather than mono — mono reads technical and fights this direction */
 .home-join input {
-  font-family: var(--font-mono);
-  letter-spacing: 0.14em;
+  font-family: var(--font-body);
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   text-align: center;
 }
 
 /* join-name form (Room.tsx, before entering a room) — same boxed card as .home-join,
-   but the input holds a person's name, so no mono/uppercase room-code treatment. */
-.join-box { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--haze); border-radius: 14px; padding: 14px; }
-.home-roomid { font-family: var(--font-mono); letter-spacing: 0.08em; }
+   but the input holds a person's name, so no room-code treatment. */
+.join-box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--teak);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  padding: 14px;
+}
+.home-roomid { font-family: var(--font-body); letter-spacing: 0.1em; color: var(--mustard); }
 
 /* small caps eyebrow, reused from the panel-label idiom for the error/status screens */
 .eyebrow {
@@ -54,11 +68,11 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--muted);
+  color: var(--faded-panel);
 }
 
 /* error/status screens (room-not-found, replaced, bad-identity, room-full) share .home's
    hero treatment; de-emphasize the wordmark and let the message carry the screen. */
 .home-status { gap: 18px; }
 .home-status h1 { font-size: 1.3rem; opacity: 0.7; }
-.home-status p { color: var(--text); font-size: 1rem; }
+.home-status p { color: var(--cream); font-size: 1rem; }

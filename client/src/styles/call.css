@@ -1,20 +1,37 @@
 /* ---------- call strip ---------- */
+/* a warm surface bar (matches the panels) rather than a bare row; flex-shrink: 0 so it keeps
+   its natural height while .video-wrap absorbs any shortfall on a short window. */
 
-.call-strip { display: flex; gap: 10px; align-items: center; overflow-x: auto; padding-bottom: 4px; }
+.call-strip {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  overflow-x: auto;
+  flex-shrink: 0;
+  background: var(--teak);
+  border: 1px solid var(--seam);
+  border-radius: 14px;
+  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  padding: 12px;
+}
 .tile {
   position: relative;
   width: 140px;
   aspect-ratio: 4 / 3;
-  background: var(--surface);
-  border: 2px solid transparent;
+  flex-shrink: 0;
+  background: var(--wall);
+  border: 1px solid var(--seam);
   border-radius: 12px;
   overflow: hidden;
-  flex-shrink: 0;
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
-.tile.connected { border-color: var(--pulse); box-shadow: 0 0 0 1px var(--pulse), 0 0 14px rgba(127, 212, 193, 0.35); }
+/* sage is reserved for live states only — this is the one place it belongs */
+.tile.connected {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 1px var(--sage), 0 0 14px rgba(126, 155, 122, 0.35);
+}
 .tile video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.tile .no-cam { display: grid; place-items: center; height: 100%; color: var(--muted); font-size: 1.4rem; }
+.tile .no-cam { display: grid; place-items: center; height: 100%; color: var(--faded-panel); font-size: 1.3rem; }
 .tile-name {
   position: absolute;
   left: 0;
@@ -22,17 +39,19 @@
   bottom: 0;
   padding: 18px 8px 6px;
   font-size: 0.72rem;
-  color: #fff;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.78), transparent);
+  color: var(--cream);
+  background: linear-gradient(to top, rgba(20, 14, 8, 0.7), transparent);
 }
 
 .call-controls { display: flex; flex-direction: column; gap: 8px; margin-left: 2px; flex-shrink: 0; }
 .call-controls button {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   padding: 0;
   display: grid;
   place-items: center;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
+  background: var(--wall);
+  border: 1px solid var(--seam);
 }
-.call-controls button.off { background: var(--ink); color: var(--muted); opacity: 0.85; }
+.call-controls button.off { color: var(--faded-panel); opacity: 0.85; }

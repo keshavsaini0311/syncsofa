@@ -1,23 +1,33 @@
 /* ---------- responsive ---------- */
-/* breakpoint overrides for the room shell (room.css) and call strip (call.css) — must
-   load after both so these rules win the cascade over the component defaults. */
+/* breakpoint overrides for the room shell (room.css), panels (panels.css), and call strip
+   (call.css) — must load after all three so these rules win the cascade over the component
+   defaults.
 
-@media (max-width: 800px) {
-  .room main { grid-template-columns: 1fr; overflow-y: auto; padding: 12px; gap: 12px; }
-  .room header { padding: 10px 14px; }
-  .video-wrap { min-height: 200px; }
+   Below ~900px the two columns stack and can't all fit one viewport at once (video + call
+   strip + reactions + full playlist + full chat), so below this point we deliberately drop
+   the no-scroll app shell and let the page scroll like a normal document instead. */
+
+@media (max-width: 900px) {
+  .room { height: auto; min-height: 100dvh; overflow: visible; padding: 12px; gap: 12px; }
+  .room header { padding: 12px 16px; }
+  .room main { grid-template-columns: 1fr; }
+  .stage, aside { min-height: auto; }
+  .video-wrap { flex: none; min-height: 220px; }
+  .panel { flex: none; min-height: auto; }
+  .playlist ul, .chat-log { flex: none; min-height: auto; overflow-y: visible; }
+
   /* the single-column grid track (aside) and the flex item that actually overflows it
      (.playlist li .title, which relies on white-space: nowrap + text-overflow: ellipsis in
      panels.css) both default to min-width: auto — refusing to shrink below their content's
      width. A long title's unwrapped intrinsic width then becomes the grid track's minimum,
      blowing the whole row past the viewport before the ellipsis ever gets a chance to engage. */
-  aside { min-height: auto; min-width: 0; }
+  aside { min-width: 0; }
   .playlist li .title { min-width: 0; }
   .tile { width: 116px; }
 }
 
 @media (max-width: 480px) {
-  .room header { grid-template-columns: 1fr; justify-items: center; text-align: center; }
-  .room-code { font-size: 1.2rem; letter-spacing: 0.16em; }
+  .room header { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; }
+  .room-code { font-size: 1.15rem; letter-spacing: 0.16em; }
   .presence { justify-self: center; }
 }
