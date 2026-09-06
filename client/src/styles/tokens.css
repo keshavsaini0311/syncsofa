@@ -1,0 +1,15 @@
+:root {
+  /* lights-down palette — warm aubergine-blacks, one cool note reserved for liveness */
+  --ink: #14121a; /* page — deep aubergine-black */
+  --surface: #1e1a26; /* raised panels */
+  --haze: #2a2436; /* hover / active / borders */
+  --glow: #ffd9a0; /* warm screenlight — accent, used as LIGHT (edges, small type, fills on small controls) */
+  --pulse: #7fd4c1; /* cool mint — ONLY for live / presence / connected states */
+  --text: #ede7f2;
+  --muted: #9089a3;
+  --danger: #e0604a;
+
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}

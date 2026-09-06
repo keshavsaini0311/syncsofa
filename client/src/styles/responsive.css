@@ -1,0 +1,17 @@
+/* ---------- responsive ---------- */
+/* breakpoint overrides for the room shell (room.css) and call strip (call.css) — must
+   load after both so these rules win the cascade over the component defaults. */
+
+@media (max-width: 800px) {
+  .room main { grid-template-columns: 1fr; overflow-y: auto; padding: 12px; gap: 12px; }
+  .room header { padding: 10px 14px; }
+  .video-wrap { min-height: 200px; }
+  aside { min-height: auto; }
+  .tile { width: 116px; }
+}
+
+@media (max-width: 480px) {
+  .room header { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .room-code { font-size: 1.2rem; letter-spacing: 0.16em; }
+  .presence { justify-self: center; }
+}
