@@ -31,12 +31,12 @@
 .call-strip {
   display: flex;
   gap: 10px;
-  justify-content: center;
+  justify-content: flex-start;
   overflow-x: auto;
 }
 .tile {
   position: relative;
-  width: 160px;
+  width: 120px;
   aspect-ratio: 4 / 3;
   flex-shrink: 0;
   background: var(--wall);

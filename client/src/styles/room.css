@@ -134,14 +134,22 @@ aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-heig
   display: flex;
   align-items: center;
   justify-content: center;
+  /* lets .video-wrap below query this box's own width/height in cqw/cqh, independent of
+     content size — needed for the contain-fit sizing to see both axes at once. */
+  container-type: size;
 }
 
-/* height-constrained 16:9 box, centred horizontally: height: 100% + aspect-ratio derives the
-   width, so on a wide window the box is limited by height (side margins appear via
-   margin-inline: auto) and on a narrow window max-width: 100% takes over and the box is
-   limited by width instead — either way the ratio itself never changes. Previously this had
-   flex: 1 1 auto alongside aspect-ratio in the same column flex container, and the flex sizing
-   always won on height, so the ratio never actually constrained the box (2.6:1 in practice). */
+/* height-constrained 16:9 box, centred: height: 100% + aspect-ratio derives the width from
+   height, which only holds while the derived width still fits the available column. Shrinking
+   the call strip (call.css) hands .video-stage more height, and on a column that isn't wide
+   enough for that much height at 16:9, width: auto used to hit max-width: 100% and clamp —
+   height stayed put, so the box quietly went off-ratio instead of shrinking (contain never
+   actually happens with only one auto axis). The cqw/cqh pair below is the real fix: given the
+   stage's own box size (container-type: size above), pick whichever of "100% height's matching
+   width" / "100% width's matching height" is smaller — a CSS-only contain-fit that is correct
+   whichever axis is the tighter one. It's a progressive override: unsupporting browsers simply
+   fail to parse the cq* values and keep the height/width/max-width fallback above (same old
+   width-clamp bug on very narrow columns, but every browser this app targets supports it). */
 .video-wrap {
   position: relative;
   height: 100%;
@@ -149,6 +157,8 @@ aside { display: flex; flex-direction: column; gap: 16px; min-width: 0; min-heig
   max-width: 100%;
   margin-inline: auto;
   aspect-ratio: 16 / 9;
+  width: min(100%, calc(100cqh * 16 / 9));
+  height: min(100%, calc(100cqw * 9 / 16));
   background: linear-gradient(160deg, #23201B 0%, #2A2620 55%, #201D18 100%);
   border: 1px solid var(--seam);
   border-radius: 16px;
