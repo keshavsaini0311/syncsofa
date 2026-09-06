@@ -8,6 +8,15 @@ export function Home() {
     setBusy(true);
     try {
       const res = await fetch('/api/rooms', { method: 'POST' });
+      if (!res.ok) {
+        setBusy(false);
+        alert(
+          res.status === 429
+            ? 'Too many rooms created from here — try again in a while.'
+            : 'Could not create a room.',
+        );
+        return;
+      }
       const { id } = (await res.json()) as { id: string };
       window.location.href = `/r/${id}`;
     } catch {

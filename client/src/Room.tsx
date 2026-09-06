@@ -167,7 +167,14 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
       <div className="home">
         <h1>🛋️ syncsofa</h1>
         <p>Couldn’t rejoin — this room already has someone using this tab’s identity. Reload to join as a new participant.</p>
-        <button className="primary" onClick={() => location.reload()}>
+        <button
+          className="primary"
+          onClick={() => {
+            sessionStorage.removeItem('syncsofa-pid');
+            sessionStorage.removeItem(`syncsofa-secret-${roomId}`);
+            location.reload();
+          }}
+        >
           Reload
         </button>
       </div>

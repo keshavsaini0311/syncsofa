@@ -45,8 +45,10 @@ export function Player({ videoId, itemId, playback, send }: Props) {
   const lastPolled = useRef(-1);
   const lastTickAt = useRef(0);
   // what applyRemote most recently drove the player toward, so we can consume exactly the one
-  // resulting event instead of blanket-discarding every event for a fixed window
-  const expecting = useRef<{ state: number; until: number } | null>(null);
+  // resulting event instead of blanket-discarding every event for a fixed window.
+  // a queue, not a single slot: a second remote change can arrive before the first one's event
+  // lands, and overwriting would let the first event escape as a spurious user action
+  const expecting = useRef<{ state: number; until: number }[]>([]);
   // guards the divergence reconciliation below from fighting a broadcast we just made ourselves
   const pendingUntil = useRef(0);
   const [failed, setFailed] = useState(false);
@@ -65,7 +67,9 @@ export function Player({ videoId, itemId, playback, send }: Props) {
     if (!ready.current || !p || !pb) return;
     suppressUntil.current = Date.now() + 1000;
     // long deadline is safe because we match on state, not time
-    expecting.current = { state: pb.isPlaying ? 1 : 2, until: Date.now() + 5000 };
+    const now = Date.now();
+    expecting.current = expecting.current.filter((e) => now < e.until);
+    expecting.current.push({ state: pb.isPlaying ? 1 : 2, until: now + 5000 });
     const expected = Math.max(0, expectedTime(pb, Date.now()));
     if (Math.abs((p.getCurrentTime?.() ?? 0) - expected) > 0.75) p.seekTo(expected, true);
     if (pb.isPlaying) p.playVideo();
@@ -99,10 +103,11 @@ export function Player({ videoId, itemId, playback, send }: Props) {
               sendRef.current({ t: 'video-ended', itemId: itemIdRef.current });
               return;
             }
-            const exp = expecting.current;
-            if (exp && exp.state === e.data && Date.now() < exp.until) {
+            const nowSc = Date.now();
+            const expIdx = expecting.current.findIndex((exp) => exp.state === e.data && nowSc < exp.until);
+            if (expIdx !== -1) {
               // this is the event our own applyRemote caused — consume it, don't echo it
-              expecting.current = null;
+              expecting.current.splice(expIdx, 1);
               return;
             }
             // any other transition is the local user acting, even if it lands moments after a
@@ -157,9 +162,14 @@ export function Player({ videoId, itemId, playback, send }: Props) {
 
       const playing = p.getPlayerState?.() === 1;
 
+      // an applyRemote already driving toward the room's state is not divergence — it is a
+      // player mid-buffer. Reconciling here would seekTo every tick and restart the buffer.
+      const driving = expecting.current.some((e) => now < e.until && e.state === (pb.isPlaying ? 1 : 2));
+
       // if our play/pause state disagrees with the room's, and we have no action of our own in
       // flight, we diverged — re-apply the room's state rather than sitting out of sync forever
-      if (now > pendingUntil.current && playing !== pb.isPlaying) {
+      if (!driving && now > pendingUntil.current && playing !== pb.isPlaying) {
+        lastPolled.current = -1; // don't let the next tick read the jump as a user seek
         applyRemote();
         return;
       }
