@@ -160,40 +160,55 @@ export function Player({ videoId, itemId, playback, send }: Props) {
         return;
       }
 
-      const playing = p.getPlayerState?.() === 1;
+      const playerState = p.getPlayerState?.();
+      const playing = playerState === 1;
+      const buffering = playerState === 3;
 
       // an applyRemote already driving toward the room's state is not divergence — it is a
       // player mid-buffer. Reconciling here would seekTo every tick and restart the buffer.
+      // buffering is excluded outright too: a *local* scrub drops the player into BUFFERING with
+      // no matching `expecting` entry, and treating that as play/pause divergence forced a
+      // seekTo back to the room's position before the seek-detection below ever ran.
       const driving = expecting.current.some((e) => now < e.until && e.state === (pb.isPlaying ? 1 : 2));
 
       // if our play/pause state disagrees with the room's, and we have no action of our own in
       // flight, we diverged — re-apply the room's state rather than sitting out of sync forever
-      if (!driving && now > pendingUntil.current && playing !== pb.isPlaying) {
+      if (!driving && !buffering && now > pendingUntil.current && playing !== pb.isPlaying) {
         lastPolled.current = -1; // don't let the next tick read the jump as a user seek
         applyRemote();
         return;
       }
 
       const local = p.getCurrentTime();
-      let polled = local;
 
-      if (now > suppressUntil.current && playing) {
-        // ponytail: seek = time jumped vs last poll; the IFrame API has no seek event
-        if (lastPolled.current >= 0 && Math.abs(local - lastPolled.current - elapsed) > 2.5) {
+      if (now > suppressUntil.current && lastPolled.current >= 0) {
+        // a seek is a position jump whether or not we're playing: scrubbing while paused moves
+        // the position with no state change, and scrubbing while playing drops YT into BUFFERING.
+        // Gating this on `playing` missed both, and drift correction then pulled the jump back.
+        const jump = local - lastPolled.current - (playing ? elapsed : 0);
+        if (Math.abs(jump) > 2.5) {
           suppressUntil.current = now + 1000;
           pendingUntil.current = now + 1500;
+          expecting.current = []; // our own seek supersedes any pending remote expectation
+          lastPolled.current = local;
           sendRef.current({ t: 'seek', time: local });
-        } else {
-          const expected = Math.max(0, expectedTime(pb, now));
-          if (needsCorrection(local, expected)) {
-            suppressUntil.current = now + 1000;
-            p.seekTo(expected, true);
-            // the next tick must compare against where we just moved to, not where we were
-            polled = expected;
-          }
+          return;
         }
       }
-      lastPolled.current = polled;
+
+      if (now > suppressUntil.current && playing) {
+        const expected = Math.max(0, expectedTime(pb, now));
+        if (needsCorrection(local, expected)) {
+          suppressUntil.current = now + 1000;
+          p.seekTo(expected, true);
+          lastPolled.current = expected;
+          return;
+        }
+      }
+
+      // hold the baseline through a buffer: the position is mid-transition and unreliable, and
+      // clobbering it here is what made the seek invisible on the following tick
+      if (!buffering) lastPolled.current = local;
     }, 1000);
     return () => clearInterval(iv);
   }, []);

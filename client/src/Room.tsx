@@ -83,6 +83,24 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const [mesh] = useState(() => new PeerMesh(socket, pid));
   const [streams, setStreams] = useState<Map<string, MediaStream>>(new Map());
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  async function copyInvite() {
+    const url = location.href;
+    try {
+      if (!navigator.clipboard) throw new Error('clipboard unavailable');
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // non-secure origin, or the document lost focus — let them copy it by hand
+      prompt('Copy this link:', url);
+    }
+  }
+
+  useEffect(() => () => clearTimeout(copiedTimer.current), []);
 
   useEffect(() => {
     const initialSecret = storedSecret(roomId);
@@ -196,16 +214,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
     <div className="room">
       <header>
         <a href="/" className="brand">🛋️ syncsofa</a>
-        <button
-          className="room-code"
-          onClick={() => {
-            // navigator.clipboard is secure-context only; fall back to a manual-copy prompt
-            navigator.clipboard?.writeText(location.href).catch(() => prompt('Copy this link:', location.href));
-            if (!navigator.clipboard) prompt('Copy this link:', location.href);
-          }}
-          title="Copy invite link"
-        >
-          {roomId} ⧉
+        <button className="room-code" onClick={copyInvite} title="Copy invite link">
+          {copied ? 'Copied' : roomId} ⧉
         </button>
         <span className="presence">{state.participants.length} here</span>
       </header>
