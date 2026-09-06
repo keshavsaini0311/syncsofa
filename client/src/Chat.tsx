@@ -15,6 +15,7 @@ export function Chat({ messages, send }: Props) {
     <div className="panel chat">
       <h2>Chat</h2>
       <div className="chat-log">
+        {messages.length === 0 && <p className="chat-empty">No messages yet — say hi.</p>}
         {messages.map((m) => (
           <div key={m.id} className="chat-msg">
             <b>{m.author}</b>

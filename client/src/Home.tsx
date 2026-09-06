@@ -27,21 +27,32 @@ export function Home() {
 
   return (
     <div className="home">
-      <h1>🛋️ syncsofa</h1>
-      <p>Watch YouTube together — in sync, on a call.</p>
-      <button className="primary" onClick={create} disabled={busy}>
-        Create a room
-      </button>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const c = code.trim().toUpperCase();
-          if (c) window.location.href = `/r/${c}`;
-        }}
-      >
-        <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Room code" maxLength={6} />
-        <button type="submit">Join</button>
-      </form>
+      <div className="home-hero">
+        <h1>🛋️ syncsofa</h1>
+        <p className="home-tagline">Watch YouTube together — in sync, on a call.</p>
+      </div>
+      <div className="home-actions">
+        <div className="home-create">
+          <button className="primary" onClick={create} disabled={busy} aria-busy={busy}>
+            Create a room
+          </button>
+          <p className="home-hint">Starts a new room and takes you straight there.</p>
+        </div>
+        <div className="home-divider">
+          <span>or join one</span>
+        </div>
+        <form
+          className="home-join"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const c = code.trim().toUpperCase();
+            if (c) window.location.href = `/r/${c}`;
+          }}
+        >
+          <input value={code} onChange={(e) => setCode(e.target.value)} placeholder="Room code" maxLength={6} />
+          <button type="submit">Join</button>
+        </form>
+      </div>
     </div>
   );
 }

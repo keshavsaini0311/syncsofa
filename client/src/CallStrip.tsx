@@ -8,7 +8,7 @@ function VideoTile({ stream, name, muted }: { stream: MediaStream | null; name: 
     if (ref.current) ref.current.srcObject = stream;
   }, [stream]);
   return (
-    <div className="tile">
+    <div className={`tile${stream ? ' connected' : ''}`}>
       {stream ? <video ref={ref} autoPlay playsInline muted={muted} /> : <div className="no-cam">📷 off</div>}
       <span className="tile-name">{name}</span>
     </div>
@@ -36,6 +36,7 @@ export function CallStrip({ mesh, localStream, streams, participants, selfId, se
       ))}
       <div className="call-controls">
         <button
+          className={micOn ? 'on' : 'off'}
           title={micOn ? 'Mute mic' : 'Unmute mic'}
           onClick={() => {
             mesh.setEnabled('audio', !micOn);
@@ -45,6 +46,7 @@ export function CallStrip({ mesh, localStream, streams, participants, selfId, se
           {micOn ? '🎙️' : '🔇'}
         </button>
         <button
+          className={camOn ? 'on' : 'off'}
           title={camOn ? 'Turn camera off' : 'Turn camera on'}
           onClick={() => {
             mesh.setEnabled('video', !camOn);
