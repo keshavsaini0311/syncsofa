@@ -17,6 +17,9 @@
   overflow: hidden;
 }
 
+/* Slim header bar, not a panel: no teak fill/border/radius/shadow — it sits directly on the
+   --wall page ground. Padding alone (no background) keeps total height in the ~40-48px band
+   so the 16:9 video (which derives its size from this box's leftover height) gets that back. */
 .room header {
   flex-shrink: 0;
   display: flex;
@@ -24,11 +27,7 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 16px 22px;
-  background: var(--teak);
-  border: 1px solid var(--seam);
-  border-radius: 14px;
-  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  padding: 8px 2px;
 }
 .brand {
   text-decoration: none;
@@ -36,7 +35,7 @@
   font-family: var(--font-display);
   font-variation-settings: 'CASL' 1, 'wght' 700;
   font-weight: 700;
-  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
   display: flex;
   align-items: baseline;
   gap: 2px;
@@ -46,15 +45,15 @@
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
 /* the room code is the header's hero, but rendered in Rubik rather than mono — mono reads
    technical and fights the warm, casual register of this direction. */
-.room-code-group { display: flex; align-items: center; gap: 10px; }
+.room-code-group { display: flex; align-items: center; gap: 8px; }
 .room-code-label {
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--faded-panel);
@@ -62,22 +61,25 @@
 .room-code {
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: clamp(1.1rem, 2vw, 1.3rem);
-  letter-spacing: 0.22em;
+  font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--cream);
 }
+/* the header no longer supplies a fill of its own, so the button carries the panel treatment
+   that used to belong to the header — teak fill cut out of the --wall ground, same as every
+   other control in this direction (call.css tiles, mute buttons). */
 .copy-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: var(--wall);
+  gap: 6px;
+  background: var(--teak);
   border: 1px solid var(--seam);
-  border-radius: 10px;
-  padding: 7px 12px;
-  font-size: 0.82rem;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
 }
-.copy-btn:hover:not(:disabled) { border-color: var(--mustard); background: var(--teak); }
+.copy-btn:hover:not(:disabled) { border-color: var(--mustard); }
 .copy-icon {
   width: 12px;
   height: 12px;
@@ -93,20 +95,20 @@
   border: 1.4px solid var(--mustard);
   border-radius: 2px;
 }
-.copy-icon::before { top: 0; left: 0; background: var(--wall); }
-.copy-icon::after { bottom: 0; right: 0; background: var(--teak); }
+.copy-icon::before { top: 0; left: 0; background: var(--teak); }
+.copy-icon::after { bottom: 0; right: 0; background: var(--wall); }
 
 .presence {
   color: var(--faded-panel);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 .presence::before {
   content: '';
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: var(--sage);
   box-shadow: 0 0 8px rgba(126, 155, 122, 0.5);

@@ -9,7 +9,7 @@
 
 @media (max-width: 900px) {
   .room { height: auto; min-height: 100dvh; overflow: visible; padding: 12px; gap: 12px; }
-  .room header { padding: 12px 16px; }
+  .room header { padding: 8px 4px; }
   .room main { grid-template-columns: 1fr; }
   .stage, aside { min-height: auto; }
   .video-stage { flex: none; min-height: 220px; }
@@ -29,9 +29,10 @@
 }
 
 @media (max-width: 480px) {
-  .room header { flex-direction: column; text-align: center; gap: 10px; }
+  .room header { flex-direction: column; text-align: center; gap: 8px; padding: 6px 4px; }
   .topbar-right { justify-content: center; }
-  .room-code { font-size: 1.15rem; letter-spacing: 0.16em; }
+  .room-code { font-size: 1.1rem; letter-spacing: 0.16em; }
+  .copy-btn { padding: 6px 12px; font-size: 0.8rem; }
 
   /* the 16:9 video box is short at this width (~206px at 390px viewport), so the full-size
      vertical reaction strip (260px) would run edge-to-edge and crowd the title/control bands
