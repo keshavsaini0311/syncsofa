@@ -71,7 +71,13 @@ export function Player({ videoId, itemId, playback, send }: Props) {
     expecting.current = expecting.current.filter((e) => now < e.until);
     expecting.current.push({ state: pb.isPlaying ? 1 : 2, until: now + 5000 });
     const expected = Math.max(0, expectedTime(pb, Date.now()));
-    if (Math.abs((p.getCurrentTime?.() ?? 0) - expected) > 0.75) p.seekTo(expected, true);
+    // we know exactly where this puts the player — say so, so the anchor can never go stale
+    // across a remote-driven move (buffering or not), which is what let case 4 misread a
+    // post-buffer resume as a user seek and broadcast a stale, still-behind position.
+    if (Math.abs((p.getCurrentTime?.() ?? 0) - expected) > 0.75) {
+      p.seekTo(expected, true);
+      lastPolled.current = expected;
+    }
     if (pb.isPlaying) p.playVideo();
     else p.pauseVideo();
   }
