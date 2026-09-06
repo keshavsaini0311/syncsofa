@@ -1,18 +1,24 @@
 :root {
-  /* Living Room palette — warm dark brown, never black or white anywhere */
-  --wall: #2E2A24; /* page */
-  --teak: #3D372E; /* raised panels */
-  --seam: #564E42; /* borders */
-  --mustard: #D9A441; /* accent — lamplight */
+  /* Living Room palette (default theme) — warm dark brown, never black or white anywhere.
+     Darkened for late-night viewing: --wall and --teak deepened, --mustard pulled back so it
+     reads as lamplight rather than a highlight. --rust/--sage/--cream/--faded left untouched —
+     the brief only asked to deepen the room and dim the lamp, not change the accent grammar. */
+  --wall: #201D18; /* page */
+  --teak: #2E2921; /* raised panels */
+  --seam: #47402F; /* borders */
+  --mustard: #C99A4C; /* accent — lamplight, dimmed from the pre-darkening #D9A441 */
   --rust: #B5543A; /* the current/active playlist item */
   --sage: #7E9B7A; /* live states ONLY — presence dot, connected peer */
   --cream: #F0E9DC; /* text */
   --faded: #A79C8C; /* muted text on --wall */
-  /* raw --faded on --teak computes to ~4.36:1 and misses AA; lighten it toward --cream for
-     muted text that sits on a panel (playlist meta, chat timestamps, icon buttons) */
+  /* text drawn on top of a --mustard-filled surface (button.primary) */
+  --on-accent: #2A2010;
+  /* raw --faded on --teak clears AA on its own now that --teak is darker, but this formula is
+     shared by every theme (incl. Signal, where it's load-bearing) — kept identical everywhere
+     so the token block stays a pure palette swap. */
   --faded-panel: color-mix(in srgb, var(--faded) 78%, var(--cream) 22%);
-  --shadow-warm: rgba(24, 16, 8, 0.42);
-  --lamp-edge: rgba(240, 233, 220, 0.08);
+  --shadow-warm: rgba(14, 9, 4, 0.46);
+  --lamp-edge: rgba(240, 233, 220, 0.07);
   --danger-bg: color-mix(in srgb, var(--rust) 30%, var(--wall));
 
   --font-display: 'Recursive', 'Familjen Grotesk', ui-rounded, 'Segoe UI', system-ui, sans-serif;

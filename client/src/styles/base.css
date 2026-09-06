@@ -27,7 +27,7 @@ button {
   transition: background 150ms ease, border-color 150ms ease, filter 150ms ease;
 }
 button:hover:not(:disabled) { border-color: var(--mustard); background: var(--teak); }
-button.primary { background: var(--mustard); color: #2A2010; border-color: var(--mustard); font-weight: 600; }
+button.primary { background: var(--mustard); color: var(--on-accent); border-color: var(--mustard); font-weight: 600; }
 button.primary:hover:not(:disabled) { filter: brightness(1.08); }
 button:disabled { opacity: 0.5; cursor: default; }
 

@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>syncsofa</title>
+    <script>
+      // Set the theme attribute before first paint so there's no flash of the wrong theme.
+      // Synchronous + inline: this has to run before the stylesheet paints, not after.
+      (function () {
+        var known = ['living-room', 'late-show', 'signal', 'matinee', 'nightgarden'];
+        var saved = localStorage.getItem('syncsofa-theme');
+        document.documentElement.dataset.theme = known.indexOf(saved) === -1 ? 'living-room' : saved;
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

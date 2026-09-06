@@ -4,6 +4,7 @@ import { Playlist } from './Playlist';
 import { Chat } from './Chat';
 import { ReactionBar, ReactionOverlay } from './Reactions';
 import { CallStrip } from './CallStrip';
+import { ThemePicker } from './ThemePicker';
 import { useRoomConnection } from './useRoomConnection';
 import {
   JoinForm,
@@ -82,6 +83,7 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             </button>
           </div>
           <span className="presence">{state.participants.length} here</span>
+          <ThemePicker />
         </div>
       </header>
       <main>

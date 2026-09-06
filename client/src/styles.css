@@ -5,6 +5,7 @@
    every component default it overrides). See css-split-report.md for the full reasoning. */
 
 @import './styles/tokens.css';
+@import './styles/themes.css';
 @import './styles/base.css';
 @import './styles/home.css';
 @import './styles/room.css';

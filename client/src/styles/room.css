@@ -115,6 +115,33 @@
   flex-shrink: 0;
 }
 
+/* theme picker: a plain <select>, sized to sit in the slim header without adding to its
+   height — no wrapper panel, just label + control on the --wall ground like the rest of the
+   header. */
+.theme-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.theme-picker-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faded-panel);
+}
+.theme-picker select {
+  font: inherit;
+  font-size: 0.78rem;
+  background: var(--teak);
+  color: var(--cream);
+  border: 1px solid var(--seam);
+  border-radius: 8px;
+  padding: 4px 8px;
+  line-height: 1.2;
+}
+.theme-picker select:hover { border-color: var(--mustard); }
+
+
 .room main {
   flex: 1 1 auto;
   min-height: 0;
