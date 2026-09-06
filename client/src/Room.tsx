@@ -69,6 +69,12 @@ function participantId(): string {
   return pid;
 }
 
+// sessionStorage, not localStorage: it's per-tab, matching the participant id it's paired with —
+// two tabs are two different participants and must never share (or race over) one identity's secret
+function storedSecret(roomId: string): string | undefined {
+  return sessionStorage.getItem(`syncsofa-secret-${roomId}`) ?? undefined;
+}
+
 function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const [state, dispatch] = useReducer(roomReducer, initialState);
   const reactionKey = useRef(0);
@@ -79,6 +85,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   useEffect(() => {
+    const initialSecret = storedSecret(roomId);
+    if (initialSecret) socket.setSecret(initialSecret);
     socket.onMessage = (msg) => {
       if (msg.t === 'signal') {
         mesh.handleSignal(msg);
@@ -86,6 +94,8 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
       }
       if (msg.t === 'peer-left') mesh.drop(msg.participantId);
       if (msg.t === 'snapshot') {
+        sessionStorage.setItem(`syncsofa-secret-${roomId}`, msg.snapshot.secret);
+        socket.setSecret(msg.snapshot.secret);
         mesh.offerTo(msg.snapshot.participants.map((p) => p.id).filter((id) => id !== msg.snapshot.selfId));
       }
       if (msg.t === 'reaction') {
@@ -94,9 +104,13 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         setTimeout(() => dispatch({ t: 'reaction-expired', key }), 3000);
         return;
       }
-      if (msg.t === 'error' && (msg.code === 'replaced' || msg.code === 'room-not-found')) {
-        // deliberate server-side teardown (evicted by another tab, or the room never existed) —
-        // stop reconnecting and release the camera instead of retrying forever behind a dead end
+      if (
+        msg.t === 'error' &&
+        (msg.code === 'replaced' || msg.code === 'room-not-found' || msg.code === 'bad-identity' || msg.code === 'room-full')
+      ) {
+        // deliberate server-side teardown (evicted by another tab, room never existed, identity
+        // rejected, or room at capacity) — stop reconnecting and release the camera instead of
+        // retrying forever behind a dead end
         socket.close();
         mesh.closeAll();
         dispatch({ t: 'server', msg });
@@ -144,6 +158,27 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
         <button className="primary" onClick={() => location.reload()}>
           Use this tab instead
         </button>
+      </div>
+    );
+  }
+
+  if (state.error === 'bad-identity') {
+    return (
+      <div className="home">
+        <h1>🛋️ syncsofa</h1>
+        <p>Couldn’t rejoin — this room already has someone using this tab’s identity. Reload to join as a new participant.</p>
+        <button className="primary" onClick={() => location.reload()}>
+          Reload
+        </button>
+      </div>
+    );
+  }
+
+  if (state.error === 'room-full') {
+    return (
+      <div className="home">
+        <h1>🛋️ syncsofa</h1>
+        <p>This room is full (6 people max — the video call connects everyone directly, so it doesn’t scale past that).</p>
       </div>
     );
   }

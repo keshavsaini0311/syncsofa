@@ -4,6 +4,7 @@ export class RoomSocket {
   private ws: WebSocket | null = null;
   private attempts = 0;
   private closed = false;
+  private secret: string | undefined;
 
   onMessage: (msg: ServerMsg) => void = () => {};
   onDisconnect: () => void = () => {};
@@ -13,6 +14,12 @@ export class RoomSocket {
     private name: string,
     private participantId: string,
   ) {}
+
+  // arrives after the first join accepts (server-issued); a reconnect must carry it so the
+  // server can tell "same participant reclaiming its id" from "someone else's id, no proof"
+  setSecret(secret: string): void {
+    this.secret = secret;
+  }
 
   connect(): void {
     if (this.closed) return;
@@ -24,7 +31,13 @@ export class RoomSocket {
     (window as unknown as { __sockets?: WebSocket[] }).__sockets = [ws];
     ws.onopen = () => {
       this.attempts = 0;
-      const join: ClientMsg = { t: 'join', roomId: this.roomId, name: this.name, participantId: this.participantId };
+      const join: ClientMsg = {
+        t: 'join',
+        roomId: this.roomId,
+        name: this.name,
+        participantId: this.participantId,
+        ...(this.secret ? { secret: this.secret } : {}),
+      };
       ws.send(JSON.stringify(join));
     };
     ws.onmessage = (e) => this.onMessage(JSON.parse(e.data as string) as ServerMsg);

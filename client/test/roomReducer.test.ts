@@ -4,6 +4,7 @@ import { initialState, roomReducer } from '../src/roomReducer';
 
 const snapshot: RoomSnapshot = {
   selfId: 'p1',
+  secret: 'test-secret',
   playback: { currentItemId: null, isPlaying: false, time: 0, updatedAt: 0 },
   playlist: [],
   participants: [{ id: 'p1', name: 'Alice' }],
