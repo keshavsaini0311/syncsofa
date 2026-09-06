@@ -62,7 +62,7 @@
 .playlist li {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 10px;
   border-radius: 12px;
   border: 1px solid transparent;
@@ -72,17 +72,29 @@
   border-color: var(--rust);
   background: color-mix(in srgb, var(--rust) 16%, var(--wall));
 }
+.playlist li .index {
+  font-size: 0.75rem;
+  color: var(--faded-panel);
+  width: 16px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.playlist li.current .index { color: var(--rust); font-weight: 700; }
+
+/* the index + reorder controls sit beside a column that holds the title above its "added by"
+   meta — .text is the flex item that shrinks (min-width: 0, also reinforced for the 390px
+   mobile grid in responsive.css) so a long title can ellipsis instead of blowing out the row. */
+.playlist li .text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
 /* a bare inline element ignores text-overflow: ellipsis — .title is a <button>, block-level
-   and given min-width: 0 (responsive.css) so it can actually shrink and ellipsis instead of
-   sitting under the ↑ ↓ ✕ controls. */
+   so it can actually shrink and ellipsis instead of sitting under the ↑ ↓ ✕ controls. */
 .playlist li .title {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
   display: block;
   text-align: left;
   background: none;
   border: 0;
-  padding: 4px 6px;
+  padding: 2px 0;
   color: var(--cream);
   font-size: 0.9rem;
   font-weight: 500;
@@ -92,22 +104,25 @@
 }
 .playlist li .title:hover { background: none; color: var(--mustard); }
 .playlist li.current .title { color: var(--rust); font-weight: 600; }
-.playlist li .by {
+.playlist li .meta {
   color: var(--faded-panel);
   font-size: 0.76rem;
-  flex-shrink: 0;
-  max-width: 88px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.playlist li .controls { display: flex; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity 150ms ease; }
-.playlist li:hover .controls,
-.playlist li:focus-within .controls { opacity: 1; }
-@media (hover: none) {
-  .playlist li .controls { opacity: 1; }
+.playlist li .now-playing {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--rust);
+  font-weight: 700;
 }
+
+.playlist li .controls { display: flex; gap: 2px; flex-shrink: 0; }
 .playlist li .controls button {
   min-width: 32px;
   min-height: 32px;
@@ -136,5 +151,16 @@
   padding-right: 4px;
 }
 .chat-empty { color: var(--faded-panel); font-size: 0.85rem; text-align: center; margin: auto; padding: 20px 10px; }
-.chat-msg { font-size: 0.88rem; line-height: 1.5; word-break: break-word; }
-.chat-msg b { color: var(--mustard); margin-right: 6px; font-weight: 600; }
+.chat-msg { display: flex; flex-direction: column; gap: 2px; font-size: 0.88rem; line-height: 1.45; word-break: break-word; }
+.chat-msg .author { font-size: 0.76rem; font-weight: 600; display: flex; align-items: baseline; gap: 6px; color: var(--cream); }
+.chat-msg .author b { font-weight: 600; }
+.chat-msg.you .author b { color: var(--mustard); }
+.chat-msg .time { font-size: 0.68rem; color: var(--faded-panel); font-weight: 400; }
+.chat-msg .bubble {
+  background: var(--wall);
+  border-radius: 11px;
+  padding: 8px 11px;
+  width: fit-content;
+  max-width: 100%;
+}
+.chat-msg.you .bubble { background: color-mix(in srgb, var(--mustard) 16%, var(--wall)); }

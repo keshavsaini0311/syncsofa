@@ -69,11 +69,20 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
   return (
     <div className={`room${state.playback?.isPlaying ? ' is-playing' : ''}`}>
       <header>
-        <a href="/" className="brand">🛋️ syncsofa</a>
-        <button className="room-code" onClick={copyInvite} title="Copy invite link">
-          {copied ? 'Copied' : roomId} ⧉
-        </button>
-        <span className="presence">{state.participants.length} here</span>
+        <a href="/" className="brand">
+          syncsofa<span className="brand-dot">.</span>
+        </a>
+        <div className="topbar-right">
+          <div className="room-code-group">
+            <span className="room-code-label">Room</span>
+            <span className="room-code">{roomId}</span>
+            <button className="copy-btn" onClick={copyInvite} title="Copy invite link">
+              <span className="copy-icon" aria-hidden="true"></span>
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          <span className="presence">{state.participants.length} here</span>
+        </div>
       </header>
       <main>
         <div className="stage">
@@ -91,7 +100,6 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             )}
             <ReactionOverlay reactions={state.reactions} />
           </div>
-          <ReactionBar send={send} />
           <CallStrip
             mesh={mesh}
             localStream={localStream}
@@ -100,10 +108,11 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             selfId={state.selfId}
             selfName={name}
           />
+          <ReactionBar send={send} />
         </div>
         <aside>
           <Playlist items={state.playlist} currentItemId={state.playback?.currentItemId ?? null} send={send} />
-          <Chat messages={state.messages} send={send} />
+          <Chat messages={state.messages} send={send} selfName={name} />
         </aside>
       </main>
       {!state.joined && <div className="banner">Connecting…</div>}

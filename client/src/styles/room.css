@@ -19,10 +19,11 @@
 
 .room header {
   flex-shrink: 0;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   padding: 16px 22px;
   background: var(--teak);
   border: 1px solid var(--seam);
@@ -35,31 +36,67 @@
   font-family: var(--font-display);
   font-variation-settings: 'CASL' 1, 'wght' 700;
   font-weight: 700;
-  font-size: clamp(1.1rem, 1.6vw, 1.4rem);
+  font-size: clamp(1.2rem, 1.8vw, 1.6rem);
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+.brand-dot { color: var(--mustard); }
+
+.topbar-right {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 22px;
+  flex-wrap: wrap;
 }
 
 /* the room code is the header's hero, but rendered in Rubik rather than mono — mono reads
    technical and fights the warm, casual register of this direction. */
+.room-code-group { display: flex; align-items: center; gap: 10px; }
+.room-code-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--faded-panel);
+}
 .room-code {
-  justify-self: center;
   font-family: var(--font-body);
   font-weight: 600;
   font-size: clamp(1.1rem, 2vw, 1.3rem);
   letter-spacing: 0.22em;
   text-transform: uppercase;
-  background: var(--wall);
   color: var(--cream);
-  border: 1px solid var(--seam);
-  padding: 10px 22px;
-  border-radius: 10px;
 }
-.room-code:hover:not(:disabled) { border-color: var(--mustard); background: var(--teak); }
+.copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--wall);
+  border: 1px solid var(--seam);
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: 0.82rem;
+}
+.copy-btn:hover:not(:disabled) { border-color: var(--mustard); background: var(--teak); }
+.copy-icon {
+  width: 12px;
+  height: 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+.copy-icon::before,
+.copy-icon::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 1.4px solid var(--mustard);
+  border-radius: 2px;
+}
+.copy-icon::before { top: 0; left: 0; background: var(--wall); }
+.copy-icon::after { bottom: 0; right: 0; background: var(--teak); }
 
 .presence {
-  justify-self: end;
   color: var(--faded-panel);
   font-size: 0.85rem;
   display: flex;

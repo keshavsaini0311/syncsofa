@@ -17,17 +17,19 @@
   .playlist ul, .chat-log { flex: none; min-height: auto; overflow-y: visible; }
 
   /* the single-column grid track (aside) and the flex item that actually overflows it
-     (.playlist li .title, which relies on white-space: nowrap + text-overflow: ellipsis in
-     panels.css) both default to min-width: auto — refusing to shrink below their content's
-     width. A long title's unwrapped intrinsic width then becomes the grid track's minimum,
-     blowing the whole row past the viewport before the ellipsis ever gets a chance to engage. */
+     (.playlist li .text, which relies on white-space: nowrap + text-overflow: ellipsis on
+     .title in panels.css) both default to min-width: auto — refusing to shrink below their
+     content's width. A long title's unwrapped intrinsic width then becomes the grid track's
+     minimum, blowing the whole row past the viewport before the ellipsis ever gets a chance
+     to engage. panels.css already sets min-width: 0 on .text unconditionally; kept here too
+     so this fix reads self-contained at the breakpoint that motivated it. */
   aside { min-width: 0; }
-  .playlist li .title { min-width: 0; }
+  .playlist li .text { min-width: 0; }
   .tile { width: 116px; }
 }
 
 @media (max-width: 480px) {
-  .room header { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; }
+  .room header { flex-direction: column; text-align: center; gap: 10px; }
+  .topbar-right { justify-content: center; }
   .room-code { font-size: 1.15rem; letter-spacing: 0.16em; }
-  .presence { justify-self: center; }
 }

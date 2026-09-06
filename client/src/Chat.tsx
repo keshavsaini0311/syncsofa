@@ -1,9 +1,13 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import type { ChatMessage, ClientMsg } from '@syncsofa/shared';
 
-type Props = { messages: ChatMessage[]; send: (m: ClientMsg) => void };
+type Props = { messages: ChatMessage[]; send: (m: ClientMsg) => void; selfName: string };
 
-export const Chat = memo(function Chat({ messages, send }: Props) {
+function formatTime(ms: number): string {
+  return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+export const Chat = memo(function Chat({ messages, send, selfName }: Props) {
   const [body, setBody] = useState('');
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -17,9 +21,12 @@ export const Chat = memo(function Chat({ messages, send }: Props) {
       <div className="chat-log">
         {messages.length === 0 && <p className="chat-empty">No messages yet — say hi.</p>}
         {messages.map((m) => (
-          <div key={m.id} className="chat-msg">
-            <b>{m.author}</b>
-            {m.body}
+          <div key={m.id} className={`chat-msg${m.author === selfName ? ' you' : ''}`}>
+            <span className="author">
+              <b>{m.author}</b>
+              <span className="time">{formatTime(m.sentAt)}</span>
+            </span>
+            <span className="bubble">{m.body}</span>
           </div>
         ))}
         <div ref={bottom} />
@@ -35,7 +42,7 @@ export const Chat = memo(function Chat({ messages, send }: Props) {
         }}
       >
         <input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Say something…" />
-        <button type="submit">Send</button>
+        <button type="submit" className="primary">Send</button>
       </form>
     </div>
   );

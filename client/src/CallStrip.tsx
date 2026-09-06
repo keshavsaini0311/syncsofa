@@ -29,32 +29,37 @@ export const CallStrip = memo(function CallStrip({ mesh, localStream, streams, p
   const [camOn, setCamOn] = useState(true);
   const others = participants.filter((p) => p.id !== selfId);
   return (
-    <div className="call-strip">
-      <VideoTile stream={localStream} name={`${selfName} (you)`} muted />
-      {others.map((p) => (
-        <VideoTile key={p.id} stream={streams.get(p.id) ?? null} name={p.name} muted={false} />
-      ))}
-      <div className="call-controls">
-        <button
-          className={micOn ? 'on' : 'off'}
-          title={micOn ? 'Mute mic' : 'Unmute mic'}
-          onClick={() => {
-            mesh.setEnabled('audio', !micOn);
-            setMicOn(!micOn);
-          }}
-        >
-          {micOn ? '🎙️' : '🔇'}
-        </button>
-        <button
-          className={camOn ? 'on' : 'off'}
-          title={camOn ? 'Turn camera off' : 'Turn camera on'}
-          onClick={() => {
-            mesh.setEnabled('video', !camOn);
-            setCamOn(!camOn);
-          }}
-        >
-          {camOn ? '📷' : '🚫'}
-        </button>
+    <div className="call-strip-wrap">
+      <div className="call-strip-heading">
+        <h2>On the sofa</h2>
+        <div className="call-controls">
+          <button
+            className={micOn ? 'on' : 'off'}
+            title={micOn ? 'Mute mic' : 'Unmute mic'}
+            onClick={() => {
+              mesh.setEnabled('audio', !micOn);
+              setMicOn(!micOn);
+            }}
+          >
+            {micOn ? '🎙️' : '🔇'}
+          </button>
+          <button
+            className={camOn ? 'on' : 'off'}
+            title={camOn ? 'Turn camera off' : 'Turn camera on'}
+            onClick={() => {
+              mesh.setEnabled('video', !camOn);
+              setCamOn(!camOn);
+            }}
+          >
+            {camOn ? '📷' : '🚫'}
+          </button>
+        </div>
+      </div>
+      <div className="call-strip">
+        <VideoTile stream={localStream} name={`${selfName} (you)`} muted />
+        {others.map((p) => (
+          <VideoTile key={p.id} stream={streams.get(p.id) ?? null} name={p.name} muted={false} />
+        ))}
       </div>
     </div>
   );

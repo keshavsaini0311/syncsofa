@@ -1,22 +1,35 @@
 /* ---------- call strip ---------- */
 /* a warm surface bar (matches the panels) rather than a bare row; flex-shrink: 0 so it keeps
-   its natural height while .video-wrap absorbs any shortfall on a short window. */
+   its natural height while .video-wrap absorbs any shortfall on a short window. The heading
+   row carries the mic/camera toggles so a single participant reads as "the sofa, one seat
+   filled" rather than a mostly-empty box with controls stacked beside a tiny tile. */
 
-.call-strip {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  overflow-x: auto;
+.call-strip-wrap {
   flex-shrink: 0;
   background: var(--teak);
   border: 1px solid var(--seam);
   border-radius: 14px;
   box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
-  padding: 12px;
+  padding: 16px;
+}
+.call-strip-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.call-strip-heading h2 { font-size: 0.95rem; }
+
+.call-strip {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  overflow-x: auto;
 }
 .tile {
   position: relative;
-  width: 140px;
+  width: 160px;
   aspect-ratio: 4 / 3;
   flex-shrink: 0;
   background: var(--wall);
@@ -43,14 +56,14 @@
   background: linear-gradient(to top, rgba(20, 14, 8, 0.7), transparent);
 }
 
-.call-controls { display: flex; flex-direction: column; gap: 8px; margin-left: 2px; flex-shrink: 0; }
+.call-controls { display: flex; gap: 8px; flex-shrink: 0; }
 .call-controls button {
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   padding: 0;
   display: grid;
   place-items: center;
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   background: var(--wall);
   border: 1px solid var(--seam);
 }
