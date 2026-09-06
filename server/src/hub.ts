@@ -1,4 +1,5 @@
 import type { WebSocket } from 'ws';
+import { randomUUID } from 'node:crypto';
 import { expectedTime, type ClientMsg, type Participant, type RoomSnapshot, type ServerMsg } from '@syncsofa/shared';
 import * as store from './db';
 import { extractVideoId, fetchTitle } from './youtube';
@@ -7,8 +8,12 @@ type Conn = { ws: WebSocket; participant: Participant; roomId: string };
 
 const isItemId = (v: unknown): v is number => Number.isInteger(v);
 
+// full mesh: upload bandwidth is O(n^2), so cap n. README documents ~6 as the ceiling.
+const MAX_PARTICIPANTS = 6;
+
 export class Hub {
   private rooms = new Map<string, Map<string, Conn>>(); // roomId -> participantId -> conn
+  private identities = new Map<string, Map<string, string>>(); // roomId -> participantId -> secret
 
   constructor(
     private db: store.Db,
@@ -66,25 +71,56 @@ export class Hub {
       id: msg.participantId.slice(0, 64),
       name: name || 'Guest',
     };
-    let peers = this.rooms.get(roomId);
-    if (!peers) {
-      peers = new Map();
-      this.rooms.set(roomId, peers);
+
+    // identity check: an unclaimed id gets a fresh secret; a claimed id must present it.
+    // Nothing is written to either map yet -- a rejected join (bad-identity or room-full,
+    // below) must leave no trace, so both maps are mutated only once we're committed to accept.
+    const known = this.identities.get(roomId)?.get(participant.id);
+    let secret: string;
+    if (known === undefined) {
+      secret = randomUUID();
+    } else if (msg.secret === known) {
+      secret = known;
+    } else {
+      send(ws, { t: 'error', code: 'bad-identity' });
+      ws.close();
+      return null;
     }
-    const existing = peers.get(participant.id);
+
+    const peers = this.rooms.get(roomId);
+    if ((peers?.size ?? 0) >= MAX_PARTICIPANTS && !peers?.has(participant.id)) {
+      send(ws, { t: 'error', code: 'room-full' });
+      ws.close();
+      return null;
+    }
+
+    let roomIdentities = this.identities.get(roomId);
+    if (!roomIdentities) {
+      roomIdentities = new Map();
+      this.identities.set(roomId, roomIdentities);
+    }
+    roomIdentities.set(participant.id, secret);
+
+    let roomPeers = peers;
+    if (!roomPeers) {
+      roomPeers = new Map();
+      this.rooms.set(roomId, roomPeers);
+    }
+    const existing = roomPeers.get(participant.id);
     if (existing) {
       // tell the old socket it was deliberately replaced, so its client stops reconnecting
       send(existing.ws, { t: 'error', code: 'replaced' });
       existing.ws.close();
     }
     const conn: Conn = { ws, participant, roomId };
-    peers.set(participant.id, conn);
+    roomPeers.set(participant.id, conn);
 
     const snapshot: RoomSnapshot = {
       selfId: participant.id,
+      secret,
       playback: store.getPlayback(this.db, roomId)!,
       playlist: store.listItems(this.db, roomId),
-      participants: [...peers.values()].map((c) => c.participant),
+      participants: [...roomPeers.values()].map((c) => c.participant),
       messages: store.listMessages(this.db, roomId),
     };
     send(ws, { t: 'snapshot', snapshot });
@@ -98,6 +134,7 @@ export class Hub {
       peers.delete(conn.participant.id);
       if (peers.size === 0) {
         this.rooms.delete(conn.roomId);
+        this.identities.delete(conn.roomId);
         // nobody is left to advance the clock, and expectedTime extrapolates without bound —
         // freeze at the real position so rejoining tomorrow resumes instead of fast-forwarding
         const pb = store.getPlayback(this.db, conn.roomId);

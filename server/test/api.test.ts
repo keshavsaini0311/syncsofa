@@ -48,4 +48,22 @@ describe('api', () => {
     const { iceServers: s } = (await (await fetch(`${base}/api/ice`)).json()) as { iceServers: unknown[] };
     expect(s.length).toBeGreaterThanOrEqual(1);
   });
+
+  test('room creation is limited per IP', async () => {
+    // the limiter bucket is per-process and keyed on IP, so an earlier test in this file
+    // may have already spent part of the quota -- don't assume we start at zero, just
+    // send comfortably more than the window allows and check the shape of the outcome.
+    const statuses: number[] = [];
+    for (let i = 0; i < 25; i++) {
+      const res = await fetch(`${base}/api/rooms`, { method: 'POST' });
+      statuses.push(res.status);
+      if (i === 0) {
+        expect(res.status).toBe(200);
+        const { id } = (await res.json()) as { id: string };
+        expect(id).toMatch(/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/);
+      }
+    }
+    expect(statuses.at(-1)).toBe(429);
+    expect(statuses).toContain(429);
+  });
 });

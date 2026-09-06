@@ -19,6 +19,7 @@ export type ChatMessage = { id: number; author: string; body: string; sentAt: nu
 
 export type RoomSnapshot = {
   selfId: string;
+  secret: string;
   playback: PlaybackState;
   playlist: PlaylistItem[];
   participants: Participant[];
@@ -26,7 +27,7 @@ export type RoomSnapshot = {
 };
 
 export type ClientMsg =
-  | { t: 'join'; roomId: string; name: string; participantId: string }
+  | { t: 'join'; roomId: string; name: string; participantId: string; secret?: string }
   | { t: 'play'; time: number }
   | { t: 'pause'; time: number }
   | { t: 'seek'; time: number }

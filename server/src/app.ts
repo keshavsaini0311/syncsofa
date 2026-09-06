@@ -4,10 +4,32 @@ import { genRoomCode } from './ids';
 import { createRoom, roomExists, type Db } from './db';
 import { iceServers } from './ice';
 
+// ponytail: in-memory fixed window, per IP. Resets on restart and is per-process; that is fine
+// for one small server. Move to a shared store only if this ever runs multi-instance.
+const ROOMS_PER_HOUR = 20;
+const WINDOW_MS = 60 * 60 * 1000;
+const roomCreates = new Map<string, { count: number; resetAt: number }>();
+
 export function createApp(db: Db): express.Express {
   const app = express();
 
-  app.post('/api/rooms', (_req, res) => {
+  app.post('/api/rooms', (req, res) => {
+    const now = Date.now();
+    const key = req.ip ?? 'unknown';
+    let bucket = roomCreates.get(key);
+    if (!bucket || now > bucket.resetAt) {
+      bucket = { count: 0, resetAt: now + WINDOW_MS };
+      roomCreates.set(key, bucket);
+    }
+    if (bucket.count >= ROOMS_PER_HOUR) {
+      return res.status(429).json({ error: 'too-many-rooms' });
+    }
+    bucket.count++;
+
+    if (roomCreates.size > 500) {
+      for (const [k, v] of roomCreates) if (now > v.resetAt) roomCreates.delete(k);
+    }
+
     let id = genRoomCode();
     while (roomExists(db, id)) id = genRoomCode();
     createRoom(db, id, Date.now());
