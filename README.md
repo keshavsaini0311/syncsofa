@@ -18,6 +18,12 @@ npm run build   # builds the client into client/dist
 npm start       # one Node process serves everything on :3000
 ```
 
+**Note:** Camera and microphone require HTTPS or localhost (browser
+restriction). Chat, video playback, and playlists work fine over plain HTTP.
+For local testing, use `http://localhost:3000`; for watching together on a
+network, deploy behind HTTPS (reverse proxy, ngrok, or Cloudflare Tunnel). On
+a plain-HTTP LAN address, camera will silently appear off with no error.
+
 ## Config
 
 Copy `.env.example` to `.env`. Note that nothing in this app loads `.env`
@@ -46,10 +52,10 @@ the video call is peer-to-peer WebRTC, meshed directly between participants.
 
 ## Limits (by design)
 
-- **Room size is about six people.** The call is a full mesh — every
+- **Room size is limited to six people.** The call is a full mesh — every
   participant connects to every other one directly — so upload bandwidth
-  grows with the square of the room size. There's no SFU/media server, so
-  this is a soft practical ceiling, not an enforced cap.
+  grows with the square of the room size. The server enforces this limit,
+  rejecting new joiners when a room is full.
 - **Videos must be on YouTube.** Unlisted videos are the intended way to
   share something private — the room itself has no video storage.
 - **No accounts, no per-user access control.** The room code is the only
