@@ -12,7 +12,7 @@
   .room header { padding: 12px 16px; }
   .room main { grid-template-columns: 1fr; }
   .stage, aside { min-height: auto; }
-  .video-wrap { flex: none; min-height: 220px; }
+  .video-stage { flex: none; min-height: 220px; }
   .panel { flex: none; min-height: auto; }
   .playlist ul, .chat-log { flex: none; min-height: auto; overflow-y: visible; }
 

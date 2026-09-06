@@ -1,6 +1,6 @@
 /* ---------- call strip ---------- */
 /* a warm surface bar (matches the panels) rather than a bare row; flex-shrink: 0 so it keeps
-   its natural height while .video-wrap absorbs any shortfall on a short window. The heading
+   its natural height while .video-stage absorbs any shortfall on a short window. The heading
    row carries the mic/camera toggles so a single participant reads as "the sofa, one seat
    filled" rather than a mostly-empty box with controls stacked beside a tiny tile. */
 

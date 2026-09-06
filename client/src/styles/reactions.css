@@ -1,35 +1,48 @@
 /* ---------- reactions ---------- */
 
+/* overlaid on .video-wrap, top-right corner: YouTube's own control bar runs the full width
+   along the *bottom* of the iframe, so anything down there — even a corner — risks covering
+   play/seek/fullscreen. Top-right stays clear of it always, with no hover/focus reveal needed,
+   which also means it works the same for touch (no hover) as for mouse and keyboard.
+   pointer-events: none on the wrapper + auto on the buttons so the scrim between buttons
+   doesn't steal clicks meant for the player underneath. */
 .reaction-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
-  padding: 12px 16px;
-  flex-shrink: 0;
-  background: var(--teak);
-  border: 1px solid var(--seam);
+  max-width: calc(100% - 24px);
+  padding: 8px 10px;
+  pointer-events: none;
+  background: rgba(24, 16, 8, 0.45);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
-  box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
 .reaction-label {
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--faded-panel);
-  margin-right: 4px;
+  margin-right: 2px;
 }
 .reaction-bar button {
-  font-size: 1.2rem;
+  pointer-events: auto;
+  font-size: 1rem;
   line-height: 1;
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
   padding: 0;
   display: grid;
   place-items: center;
   background: var(--wall);
   border: 1px solid var(--seam);
-  border-radius: 11px;
+  border-radius: 10px;
   transition: background 150ms ease, transform 150ms ease, border-color 150ms ease;
 }
 .reaction-bar button:hover:not(:disabled),

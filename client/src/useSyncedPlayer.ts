@@ -114,7 +114,14 @@ export function useSyncedPlayer({ videoId, itemId, playback, send }: Args) {
         width: '100%',
         height: '100%',
         videoId,
-        playerVars: { playsinline: 1, rel: 0, modestbranding: 1 },
+        host: 'https://www.youtube-nocookie.com',
+        playerVars: {
+          playsinline: 1,
+          rel: 0,
+          modestbranding: 1,
+          enablejsapi: 1,
+          origin: window.location.origin,
+        },
         events: {
           onReady: () => {
             ready.current = true;

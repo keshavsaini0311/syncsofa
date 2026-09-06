@@ -86,19 +86,22 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
       </header>
       <main>
         <div className="stage">
-          <div className="video-wrap">
-            {currentItem ? (
-              <Player
-                key={currentItem.id}
-                videoId={currentItem.videoId}
-                itemId={currentItem.id}
-                playback={state.playback}
-                send={send}
-              />
-            ) : (
-              <div className="empty">Paste a YouTube link to start watching together.</div>
-            )}
-            <ReactionOverlay reactions={state.reactions} />
+          <div className="video-stage">
+            <div className="video-wrap">
+              {currentItem ? (
+                <Player
+                  key={currentItem.id}
+                  videoId={currentItem.videoId}
+                  itemId={currentItem.id}
+                  playback={state.playback}
+                  send={send}
+                />
+              ) : (
+                <div className="empty">Paste a YouTube link to start watching together.</div>
+              )}
+              <ReactionOverlay reactions={state.reactions} />
+              <ReactionBar send={send} />
+            </div>
           </div>
           <CallStrip
             mesh={mesh}
@@ -108,7 +111,6 @@ function RoomInner({ roomId, name }: { roomId: string; name: string }) {
             selfId={state.selfId}
             selfName={name}
           />
-          <ReactionBar send={send} />
         </div>
         <aside>
           <Playlist items={state.playlist} currentItemId={state.playback?.currentItemId ?? null} send={send} />
