@@ -354,4 +354,14 @@ test('the 7th participant is rejected with room-full, and an existing participan
   const snap = (await join(reconnected, 'p1', 'User1', secrets[0])) as Extract<ServerMsg, { t: 'snapshot' }>;
   expect(snap.snapshot.selfId).toBe('p1');
   expect(snap.snapshot.participants).toHaveLength(6);
+
+  // pin the write-ordering: the rejected 7th joiner must have left no trace in the
+  // identities map. Free a seat, then let p7 join again with NO secret -- if their id had
+  // been claimed at reject time (identities.set hoisted above the cap check), this join
+  // would come back bad-identity instead of a fresh snapshot.
+  socks6[1].close();
+  await new Promise((r) => setTimeout(r, 150));
+  const seventhRetry = await connect();
+  const snapSeventh = (await join(seventhRetry, 'p7', 'Seventh')) as Extract<ServerMsg, { t: 'snapshot' }>;
+  expect(snapSeventh.snapshot.selfId).toBe('p7');
 });

@@ -8,10 +8,15 @@ import { iceServers } from './ice';
 // for one small server. Move to a shared store only if this ever runs multi-instance.
 const ROOMS_PER_HOUR = 20;
 const WINDOW_MS = 60 * 60 * 1000;
-const roomCreates = new Map<string, { count: number; resetAt: number }>();
 
 export function createApp(db: Db): express.Express {
   const app = express();
+  const roomCreates = new Map<string, { count: number; resetAt: number }>();
+
+  // the README's https options (reverse proxy, ngrok, cloudflared) all terminate on this host,
+  // so without this req.ip is the connector's address and every visitor shares one bucket.
+  // 'loopback' not `true`: a directly-exposed instance must not let X-Forwarded-For be spoofed.
+  app.set('trust proxy', 'loopback');
 
   app.post('/api/rooms', (req, res) => {
     const now = Date.now();
@@ -28,6 +33,9 @@ export function createApp(db: Db): express.Express {
 
     if (roomCreates.size > 500) {
       for (const [k, v] of roomCreates) if (now > v.resetAt) roomCreates.delete(k);
+      // a fixed window can afford to forget: if the sweep freed nothing we are under a
+      // many-distinct-IP flood, and keeping the map is worse than resetting everyone's quota
+      if (roomCreates.size > 500) roomCreates.clear();
     }
 
     let id = genRoomCode();

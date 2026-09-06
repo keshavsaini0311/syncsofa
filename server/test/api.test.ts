@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createApp } from '../src/app';
@@ -50,20 +50,43 @@ describe('api', () => {
   });
 
   test('room creation is limited per IP', async () => {
-    // the limiter bucket is per-process and keyed on IP, so an earlier test in this file
-    // may have already spent part of the quota -- don't assume we start at zero, just
-    // send comfortably more than the window allows and check the shape of the outcome.
+    // the limiter Map lives inside createApp (one per test's fresh app), so unlike a
+    // module-level Map this test can rely on starting at a clean quota.
     const statuses: number[] = [];
-    for (let i = 0; i < 25; i++) {
+    for (let i = 0; i < 20; i++) {
       const res = await fetch(`${base}/api/rooms`, { method: 'POST' });
       statuses.push(res.status);
       if (i === 0) {
-        expect(res.status).toBe(200);
         const { id } = (await res.json()) as { id: string };
         expect(id).toMatch(/^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$/);
       }
     }
-    expect(statuses.at(-1)).toBe(429);
-    expect(statuses).toContain(429);
+    // catches a wrong ROOMS_PER_HOUR in either direction: too low would 429 inside this
+    // loop, too high would let the 21st request below through.
+    expect(statuses.every((s) => s === 200)).toBe(true);
+
+    const denied = await fetch(`${base}/api/rooms`, { method: 'POST' });
+    expect(denied.status).toBe(429);
+
+    // a distinct visitor gets its own bucket. The connection to this test server comes
+    // from loopback, and trust proxy is set to 'loopback', so X-Forwarded-For is honored
+    // as req.ip -- this doubles as a check that Fix 1's trust-proxy setting is live.
+    const otherIp = await fetch(`${base}/api/rooms`, {
+      method: 'POST',
+      headers: { 'X-Forwarded-For': '203.0.113.7' },
+    });
+    expect(otherIp.status).toBe(200);
+
+    // the window resets: fast-forward the clock past WINDOW_MS and the exhausted IP's
+    // bucket is allowed again. Date.now() is a plain global call in app.ts, so spying on
+    // it is enough -- no need to fake timers wholesale (which would also stall fetch's
+    // own internal timers).
+    const spy = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 60 * 60 * 1000 + 1);
+    try {
+      const afterWindow = await fetch(`${base}/api/rooms`, { method: 'POST' });
+      expect(afterWindow.status).toBe(200);
+    } finally {
+      spy.mockRestore();
+    }
   });
 });
