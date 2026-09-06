@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { Participant } from '@syncsofa/shared';
 import type { PeerMesh } from './rtc';
 
@@ -24,7 +24,7 @@ type Props = {
   selfName: string;
 };
 
-export function CallStrip({ mesh, localStream, streams, participants, selfId, selfName }: Props) {
+export const CallStrip = memo(function CallStrip({ mesh, localStream, streams, participants, selfId, selfName }: Props) {
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
   const others = participants.filter((p) => p.id !== selfId);
@@ -58,4 +58,4 @@ export function CallStrip({ mesh, localStream, streams, participants, selfId, se
       </div>
     </div>
   );
-}
+});

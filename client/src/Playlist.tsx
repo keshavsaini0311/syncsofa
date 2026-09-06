@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { ClientMsg, PlaylistItem } from '@syncsofa/shared';
 
 type Props = { items: PlaylistItem[]; currentItemId: number | null; send: (m: ClientMsg) => void };
 
-export function Playlist({ items, currentItemId, send }: Props) {
+export const Playlist = memo(function Playlist({ items, currentItemId, send }: Props) {
   const [url, setUrl] = useState('');
   return (
     <div className="panel playlist">
@@ -44,4 +44,4 @@ export function Playlist({ items, currentItemId, send }: Props) {
       </form>
     </div>
   );
-}
+});

@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import type { ChatMessage, ClientMsg } from '@syncsofa/shared';
 
 type Props = { messages: ChatMessage[]; send: (m: ClientMsg) => void };
 
-export function Chat({ messages, send }: Props) {
+export const Chat = memo(function Chat({ messages, send }: Props) {
   const [body, setBody] = useState('');
   const bottom = useRef<HTMLDivElement>(null);
 
@@ -39,4 +39,4 @@ export function Chat({ messages, send }: Props) {
       </form>
     </div>
   );
-}
+});

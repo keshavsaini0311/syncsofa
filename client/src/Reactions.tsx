@@ -1,9 +1,10 @@
+import { memo } from 'react';
 import type { ClientMsg } from '@syncsofa/shared';
 import type { Reaction } from './roomReducer';
 
 const EMOJIS = ['❤️', '😂', '😮', '👏', '🔥', '😢'];
 
-export function ReactionBar({ send }: { send: (m: ClientMsg) => void }) {
+export const ReactionBar = memo(function ReactionBar({ send }: { send: (m: ClientMsg) => void }) {
   return (
     <div className="reaction-bar">
       {EMOJIS.map((e) => (
@@ -13,9 +14,9 @@ export function ReactionBar({ send }: { send: (m: ClientMsg) => void }) {
       ))}
     </div>
   );
-}
+});
 
-export function ReactionOverlay({ reactions }: { reactions: Reaction[] }) {
+export const ReactionOverlay = memo(function ReactionOverlay({ reactions }: { reactions: Reaction[] }) {
   return (
     <div className="reaction-overlay">
       {reactions.map((r) => (
@@ -26,4 +27,4 @@ export function ReactionOverlay({ reactions }: { reactions: Reaction[] }) {
       ))}
     </div>
   );
-}
+});
