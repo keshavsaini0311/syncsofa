@@ -1,35 +1,30 @@
 /* ---------- reactions ---------- */
 
-/* overlaid on .video-wrap, top-right corner: YouTube's own control bar runs the full width
-   along the *bottom* of the iframe, so anything down there — even a corner — risks covering
-   play/seek/fullscreen. Top-right stays clear of it always, with no hover/focus reveal needed,
-   which also means it works the same for touch (no hover) as for mouse and keyboard.
+/* overlaid on .video-wrap as a vertical strip on the right edge, centred vertically. YouTube's
+   own chrome occupies two full-width bands — the title across the top, the control bar
+   (scrubber, time, fullscreen) across the bottom — so any *horizontal* overlay along either
+   edge collides with one of them. A vertically-centred column on the right is clear of both:
+   nothing YouTube draws there except the fullscreen button, tucked in the bottom-right corner,
+   which a strip that stops well short of the bottom edge never reaches.
    pointer-events: none on the wrapper + auto on the buttons so the scrim between buttons
    doesn't steal clicks meant for the player underneath. */
 .reaction-bar {
   position: absolute;
-  top: 12px;
+  top: 50%;
   right: 12px;
+  transform: translateY(-50%);
   z-index: 2;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  max-width: calc(100% - 24px);
-  padding: 8px 10px;
+  padding: 10px 8px;
   pointer-events: none;
   background: rgba(24, 16, 8, 0.45);
   backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 14px;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-.reaction-label {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--faded-panel);
-  margin-right: 2px;
 }
 .reaction-bar button {
   pointer-events: auto;

@@ -32,4 +32,11 @@
   .room header { flex-direction: column; text-align: center; gap: 10px; }
   .topbar-right { justify-content: center; }
   .room-code { font-size: 1.15rem; letter-spacing: 0.16em; }
+
+  /* the 16:9 video box is short at this width (~206px at 390px viewport), so the full-size
+     vertical reaction strip (260px) would run edge-to-edge and crowd the title/control bands
+     it's meant to avoid. Shrinking the buttons and gap keeps the whole strip well clear of both
+     while staying centred. */
+  .reaction-bar { right: 8px; gap: 4px; padding: 6px; }
+  .reaction-bar button { width: 22px; height: 22px; font-size: 0.75rem; border-radius: 7px; }
 }

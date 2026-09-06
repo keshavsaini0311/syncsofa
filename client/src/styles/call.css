@@ -1,8 +1,15 @@
 /* ---------- call strip ---------- */
 /* a warm surface bar (matches the panels) rather than a bare row; flex-shrink: 0 so it keeps
-   its natural height while .video-stage absorbs any shortfall on a short window. The heading
-   row carries the mic/camera toggles so a single participant reads as "the sofa, one seat
-   filled" rather than a mostly-empty box with controls stacked beside a tiny tile. */
+   its natural height while .video-stage absorbs any shortfall on a short window. No height or
+   flex-grow is ever set here — the wrap is already exactly tile-height plus this padding plus
+   the heading row (nothing claims extra band beyond that), so with one small participant tile
+   it reads as a snug strip rather than a mostly-empty band, and it only grows if the tiles
+   themselves ever need more room. Note: video-stage's height feeds .video-wrap's own
+   percentage-height/aspect-ratio sizing (room.css), so trimming this padding further to look
+   even tighter would hand .video-wrap more height than its width supports and quietly bend the
+   16:9 box off-ratio — left as-is deliberately. The heading row carries the mic/camera toggles
+   so a single participant reads as "the sofa, one seat filled" rather than a mostly-empty box
+   with controls stacked beside a tiny tile. */
 
 .call-strip-wrap {
   flex-shrink: 0;
