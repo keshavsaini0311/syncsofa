@@ -24,23 +24,36 @@
 .home-hero { display: flex; flex-direction: column; gap: 10px; align-items: center; }
 .home-tagline { font-size: 1.02rem; }
 
-.home-actions { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; max-width: 380px; }
-.home-create { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .home-hint { font-size: 0.8rem; }
 
 .home-divider { display: flex; align-items: center; gap: 10px; width: 100%; color: var(--faded-panel); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; }
 .home-divider::before,
 .home-divider::after { content: ''; flex: 1; height: 1px; background: var(--seam); }
 
-.home-join {
+/* one card holds the whole lobby: the name applies to both paths below it, so splitting
+   create and join into separate boxes would bind the name to whichever it sat nearer. */
+.lobby {
   width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   background: var(--teak);
   border: 1px solid var(--seam);
   border-radius: 14px;
   box-shadow: 0 10px 26px var(--shadow-warm), inset 0 1px 0 var(--lamp-edge);
-  padding: 14px;
-  gap: 8px;
+  padding: 16px;
+  text-align: left;
 }
+.lobby-field { display: flex; flex-direction: column; gap: 6px; }
+.lobby-field > span { font-size: 0.85rem; color: var(--faded-panel); }
+.lobby-field input { width: 100%; }
+.lobby-create { width: 100%; padding: 10px 16px; }
+.lobby .home-hint { margin-top: -6px; text-align: center; }
+.lobby .home-divider { margin: 2px 0; }
+
+.home-join { width: 100%; gap: 8px; }
+.home-join input { flex: 1; }
 /* room code, in Rubik rather than mono — mono reads technical and fights this direction */
 .home-join input {
   font-family: var(--font-body);
