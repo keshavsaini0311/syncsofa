@@ -70,7 +70,7 @@
   padding: 0;
   display: grid;
   place-items: center;
-  font-size: 0.95rem;
+  color: var(--ink);
   background: var(--wall);
   border: 1px solid var(--seam);
 }
