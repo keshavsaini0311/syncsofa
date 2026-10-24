@@ -18,6 +18,16 @@ export function createApp(db: Db): express.Express {
   // 'loopback' not `true`: a directly-exposed instance must not let X-Forwarded-For be spoofed.
   app.set('trust proxy', 'loopback');
 
+  // Exercise SQLite as well as HTTP before the host routes traffic here.
+  app.get('/api/health', (_req, res) => {
+    try {
+      db.prepare('SELECT 1').get();
+      res.json({ ok: true });
+    } catch {
+      res.status(503).json({ ok: false });
+    }
+  });
+
   app.post('/api/rooms', (req, res) => {
     const now = Date.now();
     const key = req.ip ?? 'unknown';

@@ -24,6 +24,31 @@ For local testing, use `http://localhost:3000`; for watching together on a
 network, deploy behind HTTPS (reverse proxy, ngrok, or Cloudflare Tunnel). On
 a plain-HTTP LAN address, camera will silently appear off with no error.
 
+## Deploy to Render
+
+The repository includes a `render.yaml` Blueprint for a single Node web service
+in Singapore, with HTTPS, WebSockets and a database-aware `/api/health` check.
+
+1. Sign in to [Render](https://dashboard.render.com/).
+2. Select **New > Blueprint** and connect this repository.
+3. Review the `syncsofa` service and deploy it on the **Free** instance plan.
+4. Open the generated HTTPS URL, create a room, and join its link from a second
+   browser/device. Check chat, playlist sync and camera/microphone.
+
+**Free demo storage is temporary:** SQLite lives under `/tmp/syncsofa`. Rooms,
+playlists and messages are lost on restart, redeploy or idle spin-down. The first
+visit after idle can take around a minute. Do not treat this as durable storage.
+See [Render's free-tier limits](https://render.com/docs/free).
+
+For persistent rooms, use a paid instance with a persistent disk and set
+`DB_PATH` to a file inside that disk's mount path. Keep a single instance while
+room membership and WebSocket routing live in process memory.
+
+TURN remains optional: without it, calls may fail on restrictive/mobile networks.
+Set `TURN_URL`, `TURN_USERNAME` and `TURN_CREDENTIAL` together in Render's
+environment settings if a TURN service is available. These credentials are
+returned to room participants, so use dedicated, limited relay credentials.
+
 ## Config
 
 Copy `.env.example` to `.env`. Note that nothing in this app loads `.env`

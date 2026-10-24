@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: syncsofa
+    runtime: node
+    region: singapore
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22.19.0
+      - key: NODE_ENV
+        value: production
+      # Free instances have ephemeral storage. Rooms reset on restart/redeploy.
+      - key: DB_PATH
+        value: /tmp/syncsofa/syncsofa.db

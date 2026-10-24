@@ -32,6 +32,16 @@ describe('api', () => {
   });
   afterEach(() => server.close());
 
+  test('health checks database availability', async () => {
+    const healthy = await fetch(`${base}/api/health`);
+    expect(healthy.status).toBe(200);
+    expect(await healthy.json()).toEqual({ ok: true });
+    db.close();
+    const unavailable = await fetch(`${base}/api/health`);
+    expect(unavailable.status).toBe(503);
+    expect(await unavailable.json()).toEqual({ ok: false });
+  });
+
   test('POST /api/rooms creates a joinable room', async () => {
     const res = await fetch(`${base}/api/rooms`, { method: 'POST' });
     const { id } = (await res.json()) as { id: string };
