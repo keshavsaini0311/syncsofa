@@ -4,6 +4,8 @@ Watch YouTube together, in sync, on a video call. Paste a YouTube link into a
 shared playlist, send the room link to friends, and watch together while
 seeing and hearing each other. Chat, emoji reactions, no accounts.
 
+**Live demo:** https://syncsofa.onrender.com/
+
 ## Run it
 
 ```bash
