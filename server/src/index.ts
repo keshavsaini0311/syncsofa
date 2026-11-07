@@ -13,7 +13,9 @@ const db = openDb(dbPath);
 const app = createApp(db);
 const server = createServer(app);
 
-const wss = new WebSocketServer({ server, path: '/ws' });
+// ws defaults to 100 MiB per message; our largest legit frame is an SDP offer (~10 KB).
+// Oversized frames close the socket with 1009 and the client's reconnect takes over.
+const wss = new WebSocketServer({ server, path: '/ws', maxPayload: 64 * 1024 });
 const hub = new Hub(db);
 
 type Alive = { isAlive?: boolean };

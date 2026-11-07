@@ -54,3 +54,17 @@ test('reaction broadcasts, is not persisted', async () => {
   expect(r).toMatchObject({ emoji: '🔥', from: 'Alice' });
   expect(listMessages(db, 'ABC234')).toHaveLength(0);
 });
+
+test('a socket-level error (invalid UTF-8 frame) closes only that socket, not the process', async () => {
+  const a = await connect();
+  await join(a, 'p1', 'Alice');
+  const bad = await connect();
+  await join(bad, 'p2', 'Mallory');
+  const closed = new Promise<number>((r) => bad.once('close', r));
+  bad.send(Buffer.from([0xff, 0xfe]), { binary: false }); // ws rejects it with an 'error' event on the server socket
+  expect(await closed).toBe(1007);
+
+  const got = nextMsg(a, 'chat');
+  a.send(JSON.stringify({ t: 'chat', body: 'still here' }));
+  expect(((await got) as Extract<ServerMsg, { t: 'chat' }>).message.body).toBe('still here');
+});

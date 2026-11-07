@@ -52,6 +52,10 @@ export class Hub {
     ws.on('close', () => {
       if (conn) this.leave(conn);
     });
+    // ws emits 'error' for protocol violations (oversized frame past maxPayload, invalid UTF-8)
+    // and then closes the socket itself. With no listener, Node rethrows it and the whole
+    // process dies, taking every room with it. Log it; the 'close' above does the cleanup.
+    ws.on('error', (err) => console.warn('[hub] socket error', (err as { code?: string }).code ?? err.message));
   }
 
   private join(ws: WebSocket, msg: Extract<ClientMsg, { t: 'join' }>): Conn | null {
